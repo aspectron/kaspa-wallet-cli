@@ -1,0 +1,15 @@
+{
+  "name": "kaspa-cmd",
+  "version": "0.0.1",
+  "description": "Kaspa Command Line Module",
+  "main": "wallet.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Denis.S",
+  "license": "ISC",
+  "dependencies": {
+    "commander": "^6.2.0",
+    "kaspa-node-module": "git+https://github.com/DenisStepurko/kaspa-module.git"
+  }
+}
