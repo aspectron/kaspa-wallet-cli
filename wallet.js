@@ -21,7 +21,7 @@ program
     .option('-p, --password <password>', "Password for wallet")
     .action(async (cmd, options) => {
         //console.log(Wallet)
-        // console.log(cmd.password)
+        //console.log(cmd.password)
         const wallet = new Wallet();
         const encryptedMnemonic = await wallet.export(cmd.password);
 

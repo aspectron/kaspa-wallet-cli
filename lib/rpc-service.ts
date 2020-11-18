@@ -1,20 +1,21 @@
 import * as grpc from '@grpc/grpc-js';
 import {asyncForEach} from './helper';
 
-interface IsayHello extends grpc.MethodDefinition<any, any>{
-	path: string; // "/songs.Songs/GetSong"
-    requestStream: boolean; // false
-    responseStream: boolean; // false
-    requestSerialize: grpc.serialize<any>;
-    requestDeserialize: grpc.deserialize<any>;
-    responseSerialize: grpc.serialize<any>;
-    responseDeserialize: grpc.deserialize<any>;
+interface IHelloReq{
+	name:string
+}
+interface IHelloRes{
+	message:string
+}
+interface IHelloStreamReq{
+	name:string;
+	count:number;
 }
 
 export interface IRPCService{
 	server: any;
-	sayHello:grpc.handleUnaryCall<any, any>;
-	sayRepeatHello:grpc.handleServerStreamingCall<any, any>;
+	sayHello:grpc.handleUnaryCall<IHelloReq, IHelloRes>;
+	sayRepeatHello:grpc.handleServerStreamingCall<IHelloStreamReq, any>;
 	getUTXOs:grpc.handleUnaryCall<any, any>;
 	//handleBidiStreamingCall
 	//handleClientStreamingCall
@@ -26,11 +27,11 @@ export class RPCService implements IRPCService{
 		//super()
 		this.server = server;
 	}
-	sayHello(call:grpc.ServerUnaryCall<any, any>, callback:Function) {
+	sayHello(call:grpc.ServerUnaryCall<IHelloReq, IHelloRes>, callback:Function) {
 		callback(null, {message: 'Hello ' + call.request.name});
 	}
 
-	sayRepeatHello(call:grpc.ServerWritableStream<any, any>) {
+	sayRepeatHello(call:grpc.ServerWritableStream<IHelloStreamReq, IHelloRes>) {
 		let senders = [];
 		function sender(name:string) {
 			return (callback:Function) => {
