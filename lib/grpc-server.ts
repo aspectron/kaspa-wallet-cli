@@ -7,9 +7,7 @@ import * as protoLoader from '@grpc/proto-loader';
 import {RPCService, IRPCService} from './rpc-service';
 
 
-
-
-class GRPCServer{
+export class GRPCServer{
 	grpcServer: any;//grpc.Server;
 	options: any;
 	kaspadPackage:any;
@@ -60,6 +58,3 @@ class GRPCServer{
 		);
 	}
 }
-
-let server = new GRPCServer();
-server.start();
