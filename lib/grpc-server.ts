@@ -6,11 +6,18 @@ import * as grpc from '@grpc/grpc-js';
 import * as protoLoader from '@grpc/proto-loader';
 import {RPCService, IRPCService} from './rpc-service';
 
+interface KaspadPackage extends GrpcObject{
+    RPC: ServiceClientConstructor
+}
+
+interface KaspadProto extends GrpcObject{
+    kaspad: KaspadPackage
+}
 
 export class GRPCServer{
 	grpcServer: grpc.Server;
 	options: any;
-	kaspadPackage:any;
+	kaspadPackage?: KaspadPackage;
 	rpcService: IRPCService;
 
 	constructor(options:any={}){
@@ -33,7 +40,7 @@ export class GRPCServer{
 			oneofs: true
 		});
 
-		const proto:GrpcObject = grpc.loadPackageDefinition(packageDefinition);
+		const proto:KaspadProto = <KaspadProto>grpc.loadPackageDefinition(packageDefinition);
 		this.kaspadPackage = proto.kaspad;
 		console.log("proto.kaspad", proto)
 	}
@@ -43,6 +50,8 @@ export class GRPCServer{
 	 * sample server port
 	 */
 	start() {
+		if(!this.kaspadPackage)
+			return
 		this.grpcServer.addService(this.kaspadPackage.RPC.service, this.rpcService);
 		//server.bind('0.0.0.0:50051', grpc.ServerCredentials.createInsecure());
 		//server.start();
