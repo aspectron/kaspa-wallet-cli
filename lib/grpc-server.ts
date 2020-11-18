@@ -4,7 +4,7 @@ import {
 } from '@grpc/grpc-js/build/src/make-client';
 import * as grpc from '@grpc/grpc-js';
 import * as protoLoader from '@grpc/proto-loader';
-import {RPCService, IRPCService} from './rpc-service';
+import {RPCService, IRPCService, IGRPCServer} from './rpc-service';
 
 interface KaspadPackage extends GrpcObject{
     RPC: ServiceClientConstructor
@@ -14,8 +14,10 @@ interface KaspadProto extends GrpcObject{
     kaspad: KaspadPackage
 }
 
+
+
 export class GRPCServer{
-	grpcServer: grpc.Server;
+	grpcServer: IGRPCServer;
 	options: any;
 	kaspadPackage?: KaspadPackage;
 	rpcService: IRPCService;
@@ -42,7 +44,7 @@ export class GRPCServer{
 
 		const proto:KaspadProto = <KaspadProto>grpc.loadPackageDefinition(packageDefinition);
 		this.kaspadPackage = proto.kaspad;
-		console.log("proto.kaspad", proto)
+		//console.log("proto.kaspad", proto)
 	}
 
 	/**
@@ -63,6 +65,7 @@ export class GRPCServer{
 				if(err)
 					return console.log("bindAsync:err", err)
 				this.grpcServer.start();
+				console.log(`GPRC server listening at ${serverHost}`)
 			}
 		);
 	}

@@ -44,7 +44,7 @@ class GRPCServer {
         });
         const proto = grpc.loadPackageDefinition(packageDefinition);
         this.kaspadPackage = proto.kaspad;
-        console.log("proto.kaspad", proto);
+        //console.log("proto.kaspad", proto)
     }
     /**
      * Starts an RPC server that receives requests for the RPC service at the
@@ -61,6 +61,7 @@ class GRPCServer {
             if (err)
                 return console.log("bindAsync:err", err);
             this.grpcServer.start();
+            console.log(`GPRC server listening at ${serverHost}`);
         });
     }
 }

@@ -1,29 +1,34 @@
 import * as grpc from '@grpc/grpc-js';
 import {asyncForEach} from './helper';
+import {WalletApi} from './wallet-api';
+import {
+	IRPCService, Status,
+	IHelloReq, IHelloStreamReq, IHelloRes, Api, sendUnaryData
+} from './interfaces';
 
-interface IHelloReq{
-	name:string
-}
-interface IHelloRes{
-	message:string
-}
-interface IHelloStreamReq{
-	name:string;
-	count:number;
-}
+export * from './interfaces';
 
-export interface IRPCService extends grpc.UntypedServiceImplementation{}
+const walletApi:WalletApi = new WalletApi();
+
 
 export class RPCService implements IRPCService{
 	[name: string]: grpc.UntypedHandleCall;
 
 	server: any;
+
 	constructor(server:any){
 		//super()
 		this.server = server;
 	}
-	sayHello(call:grpc.ServerUnaryCall<IHelloReq, IHelloRes>, callback:Function) {
-		callback(null, {message: 'Hello ' + call.request.name});
+
+	block(call:grpc.ServerUnaryCall<Api.BlockReq, Api.BlockRes>, cb:grpc.sendUnaryData<Api.BlockRes>){
+		console.log("block:request", call.request)
+		cb({code:Status.TODO, error:"TODO"})
+	}
+
+	sayHello(call:grpc.ServerUnaryCall<IHelloReq, IHelloRes>, cb:grpc.sendUnaryData<IHelloRes>) {
+		walletApi.testWallet("xxxxxx");
+		cb(null, {message: 'Hello ' + call.request.name});
 	}
 
 	sayRepeatHello(call:grpc.ServerWritableStream<IHelloStreamReq, IHelloRes>) {
@@ -43,7 +48,8 @@ export class RPCService implements IRPCService{
 		});
 	}
 
-	getUTXOs(call:grpc.ServerUnaryCall<any, any>, callback:Function){
+	/*
+	getUTXOs(call:grpc.ServerUnaryCall<any, any>, cb:Function){
 		let {addresses} = call.request
 		console.log("GetUTXOs:addresses", addresses, call.request)
 		let utxos = addresses.map((a:any, index:number)=>{
@@ -53,7 +59,8 @@ export class RPCService implements IRPCService{
 			}
 		});
 		console.log("utxos", utxos)
-		callback(null, {utxos});
+		cb(null, {utxos});
 	}
+	*/
 }
 
