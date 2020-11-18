@@ -3,17 +3,20 @@ import {Metadata, ServerUnaryCall,
 ServerReadableStream, ServerWritableStream, ServerDuplexStream} from '@grpc/grpc-js';
 import {ServerErrorResponse, ServerStatusResponse} from '@grpc/grpc-js/build/src/server-call';
 
+/*
 export declare enum Status{
 	TODO = 99,
 	OK = 0,
 	ERROR = 1
 }
 
+
 export interface ServerErrorRes{
 	code: Status,
 	error:string,
-	details?: string
+	details?:string
 }
+*/
 
 export namespace Api {
 
@@ -95,7 +98,7 @@ export interface IHelloReq{ name:string }
 export interface IHelloRes{ message:string }
 export interface IHelloStreamReq{ name:string; count:number; }
 
-
+/*
 export declare type sendUnaryData<ResponseType> = (error: ServerErrorRes | ServerErrorResponse | ServerStatusResponse | null, value?: ResponseType | null, trailer?: Metadata, flags?: number) => void;
 export declare type handleUnaryCall<RequestType, ResponseType> = (call: ServerUnaryCall<RequestType, ResponseType>, callback: sendUnaryData<ResponseType>) => void;
 export declare type handleClientStreamingCall<RequestType, ResponseType> = (call: ServerReadableStream<RequestType, ResponseType>, callback: sendUnaryData<ResponseType>) => void;
@@ -108,9 +111,12 @@ export interface UntypedServiceImplementation {
 }
 export declare type ServiceDefinition<ImplementationType = UntypedServiceImplementation> = {
     readonly [index in keyof ImplementationType]: grpc.MethodDefinition<any, any>;
-};
-export interface IRPCService extends UntypedServiceImplementation{
 }
+*/
+export interface IRPCService extends grpc.UntypedServiceImplementation{
+}
+/*
 export interface IGRPCServer extends grpc.Server{
 	addService(service: ServiceDefinition, implementation: UntypedServiceImplementation): void;
 }
+*/

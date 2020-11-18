@@ -2,8 +2,8 @@ import * as grpc from '@grpc/grpc-js';
 import {asyncForEach} from './helper';
 import {WalletApi} from './wallet-api';
 import {
-	IRPCService, Status,
-	IHelloReq, IHelloStreamReq, IHelloRes, Api, sendUnaryData
+	IRPCService,
+	IHelloReq, IHelloStreamReq, IHelloRes, Api
 } from './interfaces';
 
 export * from './interfaces';
@@ -23,7 +23,7 @@ export class RPCService implements IRPCService{
 
 	block(call:grpc.ServerUnaryCall<Api.BlockReq, Api.BlockRes>, cb:grpc.sendUnaryData<Api.BlockRes>){
 		console.log("block:request", call.request)
-		cb({code:Status.TODO, error:"TODO"})
+		cb({code:grpc.status.OK, details:"TODO"})
 	}
 
 	sayHello(call:grpc.ServerUnaryCall<IHelloReq, IHelloRes>, cb:grpc.sendUnaryData<IHelloRes>) {

@@ -4,7 +4,7 @@ import {
 } from '@grpc/grpc-js/build/src/make-client';
 import * as grpc from '@grpc/grpc-js';
 import * as protoLoader from '@grpc/proto-loader';
-import {RPCService, IRPCService, IGRPCServer} from './rpc-service';
+import {RPCService, IRPCService} from './rpc-service';
 
 interface KaspadPackage extends GrpcObject{
     RPC: ServiceClientConstructor
@@ -17,7 +17,7 @@ interface KaspadProto extends GrpcObject{
 
 
 export class GRPCServer{
-	grpcServer: IGRPCServer;
+	grpcServer: grpc.Server;//IGRPCServer;
 	options: any;
 	kaspadPackage?: KaspadPackage;
 	rpcService: IRPCService;
