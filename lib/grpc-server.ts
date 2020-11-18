@@ -8,7 +8,7 @@ import {RPCService, IRPCService} from './rpc-service';
 
 
 export class GRPCServer{
-	grpcServer: any;//grpc.Server;
+	grpcServer: grpc.Server;
 	options: any;
 	kaspadPackage:any;
 	rpcService: IRPCService;

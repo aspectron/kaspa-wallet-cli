@@ -12,16 +12,11 @@ interface IHelloStreamReq{
 	count:number;
 }
 
-export interface IRPCService{
-	server: any;
-	sayHello:grpc.handleUnaryCall<IHelloReq, IHelloRes>;
-	sayRepeatHello:grpc.handleServerStreamingCall<IHelloStreamReq, any>;
-	getUTXOs:grpc.handleUnaryCall<any, any>;
-	//handleBidiStreamingCall
-	//handleClientStreamingCall
-}
+export interface IRPCService extends grpc.UntypedServiceImplementation{}
 
 export class RPCService implements IRPCService{
+	[name: string]: grpc.UntypedHandleCall;
+
 	server: any;
 	constructor(server:any){
 		//super()
