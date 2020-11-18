@@ -14,9 +14,13 @@ interface IsayHello extends grpc.MethodDefinition<any, any>{
 export interface IRPCService{
 	server: any;
 	sayHello:grpc.handleUnaryCall<any, any>;
+	sayRepeatHello:grpc.handleServerStreamingCall<any, any>;
+	getUTXOs:grpc.handleUnaryCall<any, any>;
+	//handleBidiStreamingCall
+	//handleClientStreamingCall
 }
 
-export class RPCService{
+export class RPCService implements IRPCService{
 	server: any;
 	constructor(server:any){
 		//super()

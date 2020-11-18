@@ -10,7 +10,7 @@ import {RPCService, IRPCService} from './rpc-service';
 
 
 class GRPCServer{
-	grpcServer: grpc.Server;
+	grpcServer: any;//grpc.Server;
 	options: any;
 	kaspadPackage:any;
 	rpcService: IRPCService;
@@ -27,7 +27,7 @@ class GRPCServer{
 	}
 
 	init(){
-		const packageDefinition = protoLoader.loadSync(this.options.protoPath, {
+		const packageDefinition:PackageDefinition = protoLoader.loadSync(this.options.protoPath, {
 			keepCase: true,
 			longs: String,
 			enums: String,
@@ -37,7 +37,6 @@ class GRPCServer{
 
 		const proto:GrpcObject = grpc.loadPackageDefinition(packageDefinition);
 		this.kaspadPackage = proto.kaspad;
-		//const RPC:ServiceClientConstructor = this.kaspadPackage.RPC;
 		console.log("proto.kaspad", proto)
 	}
 
@@ -47,14 +46,13 @@ class GRPCServer{
 	 */
 	start() {
 		this.grpcServer.addService(this.kaspadPackage.RPC.service, this.rpcService);
-		this.grpcServer = server;
 		//server.bind('0.0.0.0:50051', grpc.ServerCredentials.createInsecure());
 		//server.start();
 		const {serverHost} = this.options;
 		this.grpcServer.bindAsync(
 			serverHost,
 			grpc.ServerCredentials.createInsecure(),
-			(err, port)=>{
+			(err:any)=>{
 				if(err)
 					return console.log("bindAsync:err", err)
 				this.grpcServer.start();
