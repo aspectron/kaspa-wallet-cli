@@ -1,0 +1,40 @@
+
+syntax = "proto3";
+
+package kaspad;
+
+// The greeting service definition.
+service RPC {
+  // Sends a greeting
+  rpc sayHello (HelloRequest) returns (HelloReply) {}
+  rpc sayRepeatHello(RepeatHelloRequest) returns (stream HelloReply);
+  rpc getUTXOs (UTXOsRequest) returns (UTXOsReply) {}
+}
+
+message UTXOsRequest {
+  repeated string addresses = 1;
+}
+message UTXO{
+	uint64 amount = 1;
+	string scriptPubKey = 2;
+	uint64 blockBlueScore = 3;
+	string packedFlags = 4;
+}
+
+message UTXOsReply {
+  repeated UTXO utxos = 1;
+}
+
+// The request message containing the user's name.
+message HelloRequest {
+  string name = 1;
+}
+message RepeatHelloRequest {
+  string name = 1;
+  int32 count = 2;
+}
+
+// The response message containing the greetings
+message HelloReply {
+  string message = 1;
+}
