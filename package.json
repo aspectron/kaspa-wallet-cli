@@ -10,6 +10,6 @@
   "license": "ISC",
   "dependencies": {
     "commander": "^6.2.0",
-    "kaspa-node-module": "git+https://github.com/DenisStepurko/kaspa-module.git"
+    "kaspa-node-module": "file:../kaspa-module"
   }
 }
