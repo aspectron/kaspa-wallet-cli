@@ -25,8 +25,9 @@ const protoLoader = __importStar(require("@grpc/proto-loader"));
 const rpc_service_1 = require("./rpc-service");
 class GRPCServer {
     constructor(options = {}) {
+        let appFolder = (options === null || options === void 0 ? void 0 : options.appFolder) || __dirname + "/../";
         this.options = Object.assign({
-            protoPath: __dirname + '/../protos/kaspad.proto',
+            protoPath: appFolder + '/protos/kaspad.proto',
             serverHost: '0.0.0.0:9090'
         }, options);
         this.grpcServer = new grpc.Server();
@@ -47,7 +48,7 @@ class GRPCServer {
     }
     /**
      * Starts an RPC server that receives requests for the RPC service at the
-     * sample server port
+     * server port
      */
     start() {
         if (!this.kaspadPackage)

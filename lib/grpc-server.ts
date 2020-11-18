@@ -21,9 +21,9 @@ export class GRPCServer{
 	rpcService: IRPCService;
 
 	constructor(options:any={}){
-
+		let appFolder = options?.appFolder || __dirname+"/../";
 		this.options = Object.assign({
-			protoPath: __dirname + '/../protos/kaspad.proto',
+			protoPath: appFolder + '/protos/kaspad.proto',
 			serverHost: '0.0.0.0:9090'
 		}, options);
 		this.grpcServer = new grpc.Server();
@@ -47,7 +47,7 @@ export class GRPCServer{
 
 	/**
 	 * Starts an RPC server that receives requests for the RPC service at the
-	 * sample server port
+	 * server port
 	 */
 	start() {
 		if(!this.kaspadPackage)
