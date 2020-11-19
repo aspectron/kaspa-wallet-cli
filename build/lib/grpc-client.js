@@ -87,7 +87,17 @@ class GRPCClient {
             let cb = this.callbacks.shift();
             console.log('stream data', data, cb);
             if (cb) {
-                cb(null, data);
+                if (data.payload) {
+                    let result = data[data.payload];
+                    if (result.error) {
+                        if (result.error.message) {
+                            result.error.details = result.error.message;
+                            delete result.error.message;
+                        }
+                        return cb(result.error);
+                    }
+                    cb(null, result);
+                }
             }
         });
         stream.on('end', () => {

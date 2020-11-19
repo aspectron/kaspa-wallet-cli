@@ -27,7 +27,8 @@ export interface ServerErrorRes{
 export namespace Api {
 
 	export interface BlockReq{
-		blockHash:string
+		blockHash:string,
+		includeBlockVerboseData?:boolean
 	}
 
 	export interface BlockRes {

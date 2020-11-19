@@ -4,6 +4,6 @@ const wallet_api_1 = require("./lib/wallet-api");
 let walletApi = new wallet_api_1.WalletApi({
     appFolder: process.cwd()
 });
-walletApi.getBlock({ blockHash: "xyz" }, (error, result) => {
-    console.log("getBlock:result", error, result);
+walletApi.getBlock({ blockHash: "xyz", includeBlockVerboseData: true }, (error, result) => {
+    console.log("getBlock:error, result", error, result);
 });
