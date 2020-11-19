@@ -8,7 +8,9 @@ import {
 
 export * from './interfaces';
 
-const walletApi:WalletApi = new WalletApi();
+const walletApi:WalletApi = new WalletApi({
+	appFolder:process.cwd()
+});
 
 
 export class RPCService implements IRPCService{
@@ -21,9 +23,10 @@ export class RPCService implements IRPCService{
 		this.server = server;
 	}
 
-	block(call:grpc.ServerUnaryCall<Api.BlockReq, Api.BlockRes>, cb:grpc.sendUnaryData<Api.BlockRes>){
+	getBlock(call:grpc.ServerUnaryCall<Api.BlockReq, Api.BlockRes>, cb:grpc.sendUnaryData<Api.BlockRes>){
 		console.log("block:request", call.request)
-		cb({code:grpc.status.OK, details:"TODO"})
+		cb({code:grpc.status.OK, details:"TODO"});
+		walletApi.getBlock(call.request, cb);
 	}
 
 	sayHello(call:grpc.ServerUnaryCall<IHelloReq, IHelloRes>, cb:grpc.sendUnaryData<IHelloRes>) {

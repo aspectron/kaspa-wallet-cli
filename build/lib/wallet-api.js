@@ -13,10 +13,19 @@ exports.WalletApi = void 0;
 const kaspaNodeModule = require('kaspa-node-module');
 const { Wallet, bitcoreKaspaSetup } = kaspaNodeModule.default;
 const helper_1 = require("./helper");
+const grpc_client_1 = require("./grpc-client");
 bitcoreKaspaSetup();
 class WalletApi {
-    constructor(server) {
+    constructor(options) {
         //this.server = any;
+        this.client = new grpc_client_1.GRPCClient({
+            appFolder: options.appFolder
+        });
+    }
+    getBlock(req, cb) {
+        this.client.call({
+            getBlockRequest: { hash: req.blockHash }
+        }, cb);
     }
     testWallet(password) {
         return __awaiter(this, void 0, void 0, function* () {

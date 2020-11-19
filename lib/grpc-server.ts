@@ -4,16 +4,8 @@ import {
 } from '@grpc/grpc-js/build/src/make-client';
 import * as grpc from '@grpc/grpc-js';
 import * as protoLoader from '@grpc/proto-loader';
-import {RPCService, IRPCService} from './rpc-service';
-
-interface KaspadPackage extends GrpcObject{
-    RPC: ServiceClientConstructor
-}
-
-interface KaspadProto extends GrpcObject{
-    kaspad: KaspadPackage
-}
-
+import {KaspadPackage, KaspadProto, IRPCService} from './interfaces';
+import {RPCService} from './rpc-service';
 
 
 export class GRPCServer{
@@ -25,7 +17,7 @@ export class GRPCServer{
 	constructor(options:any={}){
 		let appFolder = options?.appFolder || __dirname+"/../";
 		this.options = Object.assign({
-			protoPath: appFolder + '/protos/kaspad.proto',
+			protoPath: appFolder + '/protos/api.proto',
 			serverHost: '0.0.0.0:9090'
 		}, options);
 		this.grpcServer = new grpc.Server();

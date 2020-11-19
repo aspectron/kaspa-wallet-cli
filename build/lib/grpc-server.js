@@ -27,7 +27,7 @@ class GRPCServer {
     constructor(options = {}) {
         let appFolder = (options === null || options === void 0 ? void 0 : options.appFolder) || __dirname + "/../";
         this.options = Object.assign({
-            protoPath: appFolder + '/protos/kaspad.proto',
+            protoPath: appFolder + '/protos/api.proto',
             serverHost: '0.0.0.0:9090'
         }, options);
         this.grpcServer = new grpc.Server();

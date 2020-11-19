@@ -3,16 +3,32 @@ syntax = "proto3";
 
 package kaspad;
 
-// The greeting service definition.
+// The service definition.
 service RPC {
   // Sends a greeting
   rpc sayHello (HelloRequest) returns (HelloReply) {}
   rpc sayRepeatHello(RepeatHelloRequest) returns (stream HelloReply);
-  rpc getUTXOs (UTXOsRequest) returns (UTXOsReply) {}
+
+  rpc getBlock (BlockRequest) returns (BlockReply) {}
 }
 
-message UTXOsRequest {
-  repeated string addresses = 1;
+message BlockRequest {
+  string blockHash = 1;
+}
+message BlockReply{
+  string blockHash = 1;
+  repeated string parentBlockHashes = 2;
+  int32 version = 4;
+  string hashMerkleRoot = 5;
+  string acceptedIdMerkleRoot = 6;
+  string utxoCommitment = 7;
+  int32 timestamp = 8;
+  int32 bits = 9;
+  int32 nonce = 10;
+  string acceptingBlockHash = 11;
+  int32 blueScore = 12;
+  bool isChainBlock = 13;
+  int32 mass = 14;
 }
 message UTXO{
 	uint64 amount = 1;

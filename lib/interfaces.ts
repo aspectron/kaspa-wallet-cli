@@ -2,6 +2,12 @@ import * as grpc from '@grpc/grpc-js';
 import {Metadata, ServerUnaryCall,
 ServerReadableStream, ServerWritableStream, ServerDuplexStream} from '@grpc/grpc-js';
 import {ServerErrorResponse, ServerStatusResponse} from '@grpc/grpc-js/build/src/server-call';
+import {
+	GrpcObject, ProtobufTypeDefinition, PackageDefinition,
+	ServiceClientConstructor
+} from '@grpc/grpc-js/build/src/make-client';
+
+export declare type Error = ServerErrorResponse | ServerStatusResponse | null;
 
 /*
 export declare enum Status{
@@ -21,7 +27,7 @@ export interface ServerErrorRes{
 export namespace Api {
 
 	export interface BlockReq{
-		hash:string
+		blockHash:string
 	}
 
 	export interface BlockRes {
@@ -97,6 +103,20 @@ export namespace Api {
 export interface IHelloReq{ name:string }
 export interface IHelloRes{ message:string }
 export interface IHelloStreamReq{ name:string; count:number; }
+
+export interface KaspadPackage extends GrpcObject{
+    RPC: ServiceClientConstructor
+}
+
+export interface KaspadProto extends GrpcObject{
+    kaspad: KaspadPackage
+}
+
+export interface MessagesProto extends GrpcObject{
+    protowire: KaspadPackage
+}
+
+export declare type CB<ResponseType> = (error: Error, value?: ResponseType | null, trailer?: Metadata, flags?: number) => void;
 
 /*
 export declare type sendUnaryData<ResponseType> = (error: ServerErrorRes | ServerErrorResponse | ServerStatusResponse | null, value?: ResponseType | null, trailer?: Metadata, flags?: number) => void;

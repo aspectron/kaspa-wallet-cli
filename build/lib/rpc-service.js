@@ -27,15 +27,18 @@ const grpc = __importStar(require("@grpc/grpc-js"));
 const helper_1 = require("./helper");
 const wallet_api_1 = require("./wallet-api");
 __exportStar(require("./interfaces"), exports);
-const walletApi = new wallet_api_1.WalletApi();
+const walletApi = new wallet_api_1.WalletApi({
+    appFolder: process.cwd()
+});
 class RPCService {
     constructor(server) {
         //super()
         this.server = server;
     }
-    block(call, cb) {
+    getBlock(call, cb) {
         console.log("block:request", call.request);
         cb({ code: grpc.status.OK, details: "TODO" });
+        walletApi.getBlock(call.request, cb);
     }
     sayHello(call, cb) {
         walletApi.testWallet("xxxxxx");
