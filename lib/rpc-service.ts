@@ -25,7 +25,7 @@ export class RPCService implements IRPCService{
 
 	getBlock(call:grpc.ServerUnaryCall<Api.BlockReq, Api.BlockRes>, cb:grpc.sendUnaryData<Api.BlockRes>){
 		console.log("block:request", call.request)
-		cb({code:grpc.status.OK, details:"TODO"});
+		//cb({code:grpc.status.OK, details:"TODO"});
 		walletApi.getBlock(call.request, cb);
 	}
 

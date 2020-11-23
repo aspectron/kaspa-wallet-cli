@@ -1,11 +1,7 @@
-import {
-	GrpcObject, ProtobufTypeDefinition, PackageDefinition,
-	ServiceClientConstructor
-} from '@grpc/grpc-js/build/src/make-client';
+import {PackageDefinition} from '@grpc/grpc-js/build/src/make-client';
 import * as grpc from '@grpc/grpc-js';
 import * as protoLoader from '@grpc/proto-loader';
-import {KaspadPackage, MessagesProto, IRPCService} from './interfaces';
-import {RPCService} from './rpc-service';
+import {KaspadPackage, MessagesProto} from './interfaces';
 
 
 export class GRPCClient{
