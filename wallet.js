@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 
 const { Command } = require('commander');
-const { Wallet, bitcoreKaspaSetup } = require('kaspa-module').default;
-const {RPC} = require('kaspa-module-node');
+const { Wallet, kaspaSetup } = require('kaspa-wallet');
+const {RPC} = require('kaspa-wallet-grpc-node');
 
 
-bitcoreKaspaSetup();
+kaspaSetup();
 
 /*
 const rpc = new RPC({
@@ -49,7 +49,7 @@ program
         let _wallet = await Wallet.import(cmd.password, encryptedMnemonic)
         dump("wallet imported", _wallet.mnemonic)
     })
-
+/*
 program
     .command('run-grpc')
     .description('Run gRPC "run -m <method> -j <json_data>" ')
@@ -67,5 +67,5 @@ program
         console.log("Result:\n", JSON.stringify(result, null, "  "))
         rpc.disconnect();
     })
-
+*/
 program.parse(process.argv);

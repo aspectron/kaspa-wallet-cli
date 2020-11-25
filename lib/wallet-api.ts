@@ -1,11 +1,10 @@
-const kaspaNodeModule = require('kaspa-node-module');
-const { Wallet, bitcoreKaspaSetup } = kaspaNodeModule.default;
+const { Wallet, kaspaSetup } = require('kaspa-wallet');
 import {log} from './helper';
 import {Api, CB, Error} from './interfaces';
 import {GRPCClient} from './grpc-client';
 export {Api, CB, Error};
 
-bitcoreKaspaSetup();
+kaspaSetup();
 
 export class WalletApi{
 

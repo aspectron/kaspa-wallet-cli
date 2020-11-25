@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 const { Command } = require('commander');
-const {RPC} = require('kaspa-module-node');
+const {RPC} = require('kaspa-wallet-grpc-node');
 
 const rpc = new RPC({
     clientConfig:{

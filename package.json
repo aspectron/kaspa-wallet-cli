@@ -13,7 +13,7 @@
     "@grpc/proto-loader": "*",
     "@types/request": "^2.48.5",
     "commander": "^6.2.0",
-    "kaspa-module": "file:../kaspa-module",
-    "kaspa-module-node": "file:../kaspa-module-node"
+    "kaspa-wallet": "file:../kaspa-wallet",
+    "kaspa-wallet-grpc-node": "file:../kaspa-wallet-grpc-node"
   }
 }
