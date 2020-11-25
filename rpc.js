@@ -28,11 +28,17 @@ program
     .command('run')
     .description('Run gRPC "run -m <method> -j <json_data>" ')
     .option('-m, --method <method>', "rpc request, default will be 'getBlockDagInfoRequest' ")
-    .option('-j, --json <json_data>', "rpc request args as json string, default will be '{}' ")
+    .option('-j, --json <json>', "rpc request args as json string, default will be '{}' ")
     .action(async (cmd, options) => {
-        let {json_data='{}', method='getBlockDagInfoRequest'} = cmd;
+        let {json='{}', method=''} = cmd;
+        //console.log("cmd", cmd)
+        if(!method){
+            console.log("Invalid method")
+            rpc.disconnect();
+        }
+
         //console.log("method, json_data:", method, json_data)
-        let args = JSON.parse(json_data)
+        let args = JSON.parse(json)
         console.log("method, args:", method, args)
 
         console.log("\nCalling:", method)
