@@ -43,7 +43,10 @@ program
 
         console.log("\nCalling:", method)
         console.log("Arguments:\n", JSON.stringify(args, null, "  "))
-        let result = await rpc.request(method, args);
+        let result = await rpc.request(method, args)
+        .catch(error=>{
+            console.log("Error:", error)
+        })
         console.log("Result:\n", JSON.stringify(result, null, "  "))
         rpc.disconnect();
     })
