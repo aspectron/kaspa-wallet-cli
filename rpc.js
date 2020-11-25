@@ -8,6 +8,7 @@ const rpc = new RPC({
         host:"127.0.0.1:16210"
     }
 })
+rpc.client.verbose = true;
 const proto = rpc.client.proto;
 const methods = proto.KaspadMessage.type.field
     .filter(({name})=>/request/i.test(name));
@@ -64,8 +65,11 @@ methods.forEach(method=>{
 
         console.log("\nCalling:", name)
         console.log("Arguments:\n", JSON.stringify(args, null, "  "))
-        let result = await rpc.request(name, args);
-        console.log("Result:\n", JSON.stringify(result, null, "  "))
+        let result = await rpc.request(name, args)
+        .catch(error=>{
+            console.log("Error:", error)
+        })
+        console.log("Result:\n", result)
         rpc.disconnect();
     })
 })
