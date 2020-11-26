@@ -1,5 +1,19 @@
 # kaspa-wallet-cli
 
+
+### Running the wallet
+
+Kaspa Wallet currently connects to a local (default) instance of Kaspad gRPC
+
+```
+git clone git@github.com:aspectron/kaspa-wallet-cli
+cd kaspa-wallet-cli
+npm install
+
+node rpc -h
+node wallet-test
+```
+
 ```
 $ node rpc -h
 Usage: rpc [options] [command]
