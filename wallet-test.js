@@ -10,12 +10,50 @@ const rpc = new RPC({
         host:"127.0.0.1:16210"
     }
 });
-//rpc.client.verbose = true;
+rpc.client.verbose = true;
 
 Wallet.setRPC(rpc)
 
 
+const testTx = async ()=>{
+    const rpcTX = {
+        transaction: {
+            version: 1,
+            inputs: [{
+                previousOutpoint:{
+                    transactionId: {
+                        bytes: 'ddbaa0bf60ec799e7b1eb92887fd44fa65cfba5b5a38711b40e76d71d77367cb'
+                    },
+                    index: 0
+                },
+                signatureScript: '412befdab4c42f1500831352453be6cc96378469185271a3036badec7104bf92bff21fe33a7788db2b03e3a27e85bfe73c49e22d291ba621b291c6ec85a3f63240012102fb0935d9b1dd83b8fbd7285b1cca492f5da7b7b31ca785f62a399baa9ed6b3ac',
+                sequence: 4294967295
+            }],
+            outputs: [{
+                value: 1,
+                scriptPubKey: '76a914ef948254c1dfba15a5c34d5840ce2e988e32654a88ac'
+            },{
+                value: 4999998999,
+                scriptPubKey: '76a91430b9f24c57cf7e3b74ce00470e4b5d3948b138ae88ac'
+            }],
+            lockTime: 0
+        }
+    }
 
+    let responce  = await rpc.request("submitTransactionRequest", rpcTX)
+                    .catch(error=>{
+                        console.log("Error:", error)
+                    })
+    console.log("Responce", responce)
+}
+
+
+testTx();
+
+
+
+
+/*
 let dump = (label, text, deco1="-", deco2="=")=>{
     console.log(`\n${label}:\n${deco1.repeat(100)}\n${text}\n${deco2.repeat(100)}\n`)
 }
@@ -36,4 +74,5 @@ const run = async ()=>{
 }
 
 run();
+*/
 
