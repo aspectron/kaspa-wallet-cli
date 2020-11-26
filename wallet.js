@@ -7,7 +7,7 @@ const {RPC} = require('kaspa-wallet-grpc-node');
 
 kaspaSetup();
 
-/*
+
 const rpc = new RPC({
     clientConfig:{
         host:"127.0.0.1:16210"
@@ -15,7 +15,6 @@ const rpc = new RPC({
 });
 
 Wallet.setRPC(rpc)
-*/
 
 
 const program = new Command();
