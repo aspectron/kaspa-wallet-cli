@@ -38,7 +38,7 @@ const run = async ()=>{
     let utxo = utxos[0];
     if(utxo){
         let info = debugInfo.get(utxo.txId);
-        console.log("txid 2 utxos,address", utxo.txId)
+        console.log("txid --> utxos,address", utxo.txId)
         console.log(info);
     }
 
@@ -46,7 +46,7 @@ const run = async ()=>{
         toAddr: "kaspatest:qrhefqj5c80m59d9cdx4ssxw96vguvn9fgy6yc0qtd",
         amount: 1000,
         fee: 400
-    }).catch(async (error)=>{
+    }, true).catch(async (error)=>{
         console.log("\n\nerror", error)
     })
 
