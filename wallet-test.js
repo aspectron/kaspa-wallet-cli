@@ -50,7 +50,7 @@ const run = async ()=>{
         console.log("\n\nerror", error)
     })
 
-    console.log("response", response)
+    console.log("\n\nResponse", response)
 
     rpc.disconnect();
 }
