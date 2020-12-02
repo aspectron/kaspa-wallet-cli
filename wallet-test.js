@@ -91,7 +91,7 @@ const run = async ()=>{
             toAddr: "kaspatest:qrhefqj5c80m59d9cdx4ssxw96vguvn9fgy6yc0qtd",
             amount: 1000
         }).catch(async (error)=>{
-            console.log("error", error)
+            console.log("\n\nerror", error)
             //if((error+"").indexOf("fully-spent transaction") > -1){
             //    await sendTx();
             //}
