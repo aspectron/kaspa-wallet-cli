@@ -1,0 +1,47 @@
+
+
+1) start kespad (let say kd0 instance) with following config file
+
+debuglevel=info
+nobanning=1
+nodnsseed=1
+datadir=/path/to/any/empty/dir/kd0
+acceptanceindex=1
+rpclisten=0.0.0.0:16210
+listen=0.0.0.0:16211
+profile=7000
+testnet=1
+wallet=1
+
+
+2) start another kespad (let say kd1 instance) with following config file
+
+debuglevel=info
+nobanning=1
+nodnsseed=1
+datadir=/path/to/any/empty/dir/kd1
+acceptanceindex=1
+rpclisten=0.0.0.0:16310
+listen=0.0.0.0:16311
+profile=7001
+connect=0.0.0.0:16211
+testnet=1
+
+
+3) start miner with following command
+
+kaspaminer --miningaddr=kaspatest:qq0nvlmn07f6edcdfynt4nu4l4r58rkquuvgt635ac --rpcserver=localhost:16210 --block-delay=2000 --mine-when-not-synced --testnet
+
+
+
+4) git clone https://github.com/aspectron/kaspa-wallet-cli.git 
+5) cd kaspa-wallet-cli
+6) npm install
+7) wait for few minutes for mining then run following command
+8) node wallet-test.js
+
+
+
+
+
+
