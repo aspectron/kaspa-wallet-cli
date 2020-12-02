@@ -26,7 +26,7 @@ const run = async ()=>{
     dump("mnemonic created", wallet.mnemonic)
 
 
-    await wallet.addressDiscovery()
+    let debugInfo = await wallet.addressDiscovery(20, true)
     .catch(e=>{
         console.log("addressDiscovery:error", e)
     })
@@ -35,6 +35,12 @@ const run = async ()=>{
 
     let {utxoIds, utxos} = wallet.utxoSet.selectUtxos(1000);
     console.log("utxos", utxos);
+    let utxo = utxos[0];
+    if(utxo){
+        let info = debugInfo.get(utxo.txId);
+        console.log("txid 2 utxos,address", utxo.txId)
+        console.log(info);
+    }
 
     let response = await wallet.sendTx({
         toAddr: "kaspatest:qrhefqj5c80m59d9cdx4ssxw96vguvn9fgy6yc0qtd",
