@@ -66,5 +66,19 @@ const run = async ()=>{
     rpc.disconnect();
 }
 
-run();
+//run();
 
+const testNotification = async(name="BlockAdded")=>{
+    let callback = (response)=>{
+        console.log(`${name}Notification`, response)
+    }
+    let response = await rpc[`subscribe${name}`](callback)
+    .catch(e=>{
+        console.log(`notify${name}Request:error`, e)
+    })
+
+    console.log(`notify${name}Response`, response);
+}
+
+
+testNotification();
