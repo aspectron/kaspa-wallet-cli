@@ -33,16 +33,27 @@ const run = async ()=>{
 
     dump("address", wallet.receiveAddress)
 
-    let {utxoIds, utxos} = wallet.utxoSet.selectUtxos(1000);
-    console.log("utxos", utxos);
-    let utxo = utxos[0];
-    if(utxo){
-        let info = debugInfo.get(utxo.txId);
-        console.log("txid --> utxos,address", utxo.txId)
-        console.log(info);
-    }
+    //let {utxoIds, utxos} = wallet.utxoSet.selectUtxos(1000);
+    //console.log("utxos", utxos);
+    //let utxo = utxos[0];
+    //if(utxo){
+        //let info = debugInfo.get(utxo.txId);
+        //console.log("txid --> utxos,address", utxo.txId)
+        //console.log(info);
+        /*
+        let req = {
+            ids:[{bytes: Buffer.from(utxo.txId, 'hex').toString("base64")}]
+        }
+        console.log("requestTransactions:req", JSON.stringify({"requestTransactions":req}))
+        let response = await rpc.request("requestTransactions", req).catch(e=>{
+            console.log("requestTransactions:error", e)
+        })
 
-    let response = await wallet.sendTx({
+        console.log("\nrequestTransactions:response", response)
+        */
+    //}
+
+    let response = await wallet.submitTransaction({
         toAddr: "kaspatest:qrhefqj5c80m59d9cdx4ssxw96vguvn9fgy6yc0qtd",
         amount: 1000,
         fee: 400
