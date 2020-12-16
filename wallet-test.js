@@ -10,7 +10,7 @@ const rpc = new RPC({
         host:"127.0.0.1:16210"
     }
 });
-//rpc.client.verbose = true;
+rpc.client.verbose = true;
 
 Wallet.setRPC(rpc)
 
@@ -63,10 +63,11 @@ const run = async ()=>{
 
     console.log("\n\nResponse", response)
 
+
     rpc.disconnect();
 }
 
-//run();
+run();
 
 const testNotification = async(name="BlockAdded")=>{
     let callback = (response)=>{
@@ -81,4 +82,4 @@ const testNotification = async(name="BlockAdded")=>{
 }
 
 
-testNotification();
+//testNotification();
