@@ -10,7 +10,7 @@ const rpc = new RPC({
         host:"127.0.0.1:16210"
     }
 });
-rpc.client.verbose = true;
+//rpc.client.verbose = true;
 
 Wallet.setRPC(rpc)
 
@@ -25,6 +25,17 @@ const run = async ()=>{
     let wallet = Wallet.fromMnemonic("wasp involve attitude matter power weekend two income nephew super way focus");
     dump("mnemonic created", wallet.mnemonic)
 
+    wallet.on("blue-score-changed", (result)=>{
+        let {blueScore} = result;
+        console.log("blue-score-changed:result, blueScore", result, blueScore)
+    })
+
+    wallet.syncVirtualSelectedParentBlueScore()
+    .catch(e=>{
+        console.log("syncVirtualSelectedParentBlueScore:error", e)
+    })
+
+    return
 
     let debugInfo = await wallet.addressDiscovery(20, true)
     .catch(e=>{
@@ -32,6 +43,9 @@ const run = async ()=>{
     })
 
     dump("address", wallet.receiveAddress)
+    debugInfo.forEach((info, address)=>{
+        console.log("debugInfo",  address, info)
+    })
 
     //let {utxoIds, utxos} = wallet.utxoSet.selectUtxos(1000);
     //console.log("utxos", utxos);

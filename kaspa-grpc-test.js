@@ -25,5 +25,8 @@ const test = async(name, data = {})=>{
 }
 
 
-test('getVirtualSelectedParentBlueScoreRequest');
-//test('getMempoolEntriesRequest') <--- work but return 'not implemented'
+if(1){
+	test('getVirtualSelectedParentBlueScoreRequest');
+}else{
+	test('getMempoolEntriesRequest') //<--- work but return 'not implemented'
+}
