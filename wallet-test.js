@@ -35,7 +35,6 @@ const run = async ()=>{
         console.log("syncVirtualSelectedParentBlueScore:error", e)
     })
 
-    return
 
     let debugInfo = await wallet.addressDiscovery(20, true)
     .catch(e=>{
@@ -43,9 +42,14 @@ const run = async ()=>{
     })
 
     dump("address", wallet.receiveAddress)
+    /*
     debugInfo.forEach((info, address)=>{
         console.log("debugInfo",  address, info)
     })
+    */
+
+
+    //return
 
     //let {utxoIds, utxos} = wallet.utxoSet.selectUtxos(1000);
     //console.log("utxos", utxos);
