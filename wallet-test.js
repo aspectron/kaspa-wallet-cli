@@ -1,4 +1,9 @@
 #!/usr/bin/env node
+/*
+const bitcoin = require('bitcoinjs-lib');
+let chunks = bitcoin.script.decompile(Buffer.from("41bedd5e5b3079ff715b0ecb86c80d4133b3676665726ac07b34733d1e218f6fe1f28fdbdb327c749783dfd6920738bfdcf2a3c1989a48417fef26cb416002073d012103836c831ff77d759e0b1b2c9d7d9c39eb2b1c01da327b3e48b07e95b7ea3576a2", "hex"));
+console.log("chunks", chunks)
+*/
 
 const { Wallet, kaspaSetup } = require('kaspa-wallet');
 const {RPC} = require('kaspa-wallet-grpc-node');
@@ -35,13 +40,15 @@ const run = async ()=>{
         console.log("syncVirtualSelectedParentBlueScore:error", e)
     })
 
-
+    
     let debugInfo = await wallet.addressDiscovery(20, true)
     .catch(e=>{
         console.log("addressDiscovery:error", e)
     })
 
-    dump("address", wallet.receiveAddress)
+    dump("receiveAddress", wallet.receiveAddress)
+    if(!debugInfo)
+        return
     /*
     debugInfo.forEach((info, address)=>{
         console.log("debugInfo",  address, info)
@@ -85,7 +92,9 @@ const run = async ()=>{
     rpc.disconnect();
 }
 
-run();
+Wallet.onRaady(()=>{
+    run();
+});
 
 const testNotification = async(name="BlockAdded")=>{
     let callback = (response)=>{
