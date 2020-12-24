@@ -1,5 +1,8 @@
 # kaspa-wallet-cli
 
+### Running Kaspad 
+./kaspad --utxoindex --testnet
+./kaspaminer --miningaddr=kaspatest:qq0nvlmn07f6edcdfynt4nu4l4r58rkquuvgt635ac --rpcserver=localhost:16210 --block-delay=5000 --mine-when-not-synced --testnet
 
 ### Running the wallet
 
