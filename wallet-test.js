@@ -92,7 +92,7 @@ const run = async ()=>{
     rpc.disconnect();
 }
 
-Wallet.onRaady(()=>{
+Wallet.onReady(()=>{
     run();
 });
 
