@@ -39,8 +39,8 @@ algo.map(algo=>{
 let a = `
 $$$$$$$ 01000000
 $$$$$$$ 0100000000000000
-$$$$$$$ 363807910325bff85a2150a42d62a2aaea2f364c73bed19e886149154ebcfa6c
-$$$$$$$ 09000000
+$$$$$$$ 951461a93d0e91638034a05f321f74a56da0db29dd9d0327396c1c421d749d2b
+$$$$$$$ 0d000000
 $$$$$$$ 1900000000000000
 $$$$$$$ 76a914784bf4c2562f38fe0c49d1e0538cee4410d37e0988ac
 $$$$$$$ ffffffff00000000
@@ -65,8 +65,8 @@ a = a.trim().replace(/(\$\$\$\$\$\$\$)/g, '').split("\n").map(a=>a.trim()).filte
 let b = [
   '01000000',
   '0100000000000000',
-  '363807910325bff85a2150a42d62a2aaea2f364c73bed19e886149154ebcfa6c',
-  '09000000',
+  '951461a93d0e91638034a05f321f74a56da0db29dd9d0327396c1c421d749d2b',
+  '0d000000',
   '1900000000000000',
   '76a914784bf4c2562f38fe0c49d1e0538cee4410d37e0988ac',
   'ffffffff00000000',
@@ -100,7 +100,7 @@ console.log("\n"+a);
 //let inverse = '';//new BufferReader(Buffer.from(hash1, "hex")).readReverse();
 
 //let result = "80ca6efa95252d5fadf268c750cf541e45a99519ee83d0750e857735cdf378b0";
-const result = "63315b7a7572e9c27d9418ccc6c1b7c78b17c96a3d7d1d3e3e2d0d116cce6c96";
+const result = "46015d1e697c20179dae58e3c8cd627e8e1157bfcf6f5acb10a0fe11c29b5a38";
 console.log("\nrequired hash:", result)
 Object.keys(hashes).map(method=>{
 	let hash = hashes[method](a);
