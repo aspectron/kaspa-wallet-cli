@@ -71,7 +71,7 @@ const run = async ()=>{
         console.log("utxosChangedCallback:res", JSON.stringify(res, null, "\t"))
     }
     let UtxoChangedRes = await rpc.subscribeUtxosChanged(addresses, utxosChangedCallback);
-    console.log("addresses", addresses)
+    //console.log("addresses", addresses)
     console.log("UtxoChangedRes", UtxoChangedRes)
     console.log("wallet.balance", wallet.balance)
 
