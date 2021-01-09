@@ -1,12 +1,12 @@
 {
-  "name": "kaspa-cmd",
+  "name": "kaspa-wallet-cli",
   "version": "0.0.1",
   "description": "Kaspa Command Line Module",
   "main": "wallet.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "Denis.S",
+  "author": "ASPECTRON Inc.",
   "license": "ISC",
   "dependencies": {
     "@grpc/grpc-js": "*",
@@ -14,7 +14,7 @@
     "@types/request": "^2.48.5",
     "commander": "^6.2.0",
     "kaspa-wallet": "aspectron/kaspa-wallet",
-    "kaspa-wallet-grpc-node": "aspectron/kaspa-wallet-grpc-node",
+    "kaspa-grpc-node": "aspectron/kaspa-grpc-node",
     "kaspa-grpc": "aspectron/kaspa-grpc"
   }
 }

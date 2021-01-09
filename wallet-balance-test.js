@@ -1,19 +1,30 @@
 #!/usr/bin/env node
 
-const { Wallet, kaspaSetup } = require('kaspa-wallet');
-const {RPC} = require('kaspa-wallet-grpc-node');
+const { Wallet, initKaspaFramework } = require('kaspa-wallet');
+const { RPC } = require('kaspa-grpc-node');
+// initKaspaFramework();
 
-kaspaSetup();
+// const PORTS = {
+//     kaspa : 16110,
+//     kaspatest : 16210,
+//     kaspasim : 16510,
+//     kaspadev : 16610
+// }
+//const NETWORK = 'devnet';
+const network = 'kaspatest';
 
 const rpc = new RPC({
     clientConfig:{
-        host:"127.0.0.1:16210"
+        host:"127.0.0.1:"+Wallet.networkTypes[network].port
+//        host:"127.0.0.1:16110"
     }
 });
 //rpc.client.verbose = true;
+console.log('A');
 
-Wallet.setRPC(rpc)
+// Wallet.setRPC(rpc);
 
+console.log('B');
 
 let dump = (label, text, deco1="-", deco2="=")=>{
     console.log(`\n${label}:\n${deco1.repeat(100)}\n${text}\n${deco2.repeat(100)}\n`)
@@ -21,9 +32,13 @@ let dump = (label, text, deco1="-", deco2="=")=>{
 
 const run = async ()=>{
 
+    await initKaspaFramework();
+
     //let wallet = Wallet.fromMnemonic("live excuse stone acquire remain later core enjoy visual advice body play");
-    let wallet = Wallet.fromMnemonic("wasp involve attitude matter power weekend two income nephew super way focus");
+    let wallet = Wallet.fromMnemonic("wasp involve attitude matter power weekend two income nephew super way focus",{network, rpc});
+
     dump("mnemonic created", wallet.mnemonic)
+    console.log("NETWORK:",wallet.network);
 
     wallet.on("blue-score-changed", (result)=>{
         let {blueScore} = result;
@@ -39,7 +54,6 @@ const run = async ()=>{
         console.log("syncVirtualSelectedParentBlueScore:error", e)
     })
 
-    
     let debugInfo = await wallet.addressDiscovery(20, true)
     .catch(e=>{
         console.log("addressDiscovery:error", e)
@@ -78,7 +92,10 @@ const run = async ()=>{
     //rpc.disconnect();
 }
 
-Wallet.onReady(()=>{
-    run();
-});
+// console.log("waiting wallet");
+// Wallet.onReady(()=>{
+//     console.log("wallet ready");
+//     run();
+// });
 
+run();

@@ -10,12 +10,21 @@ const {RPC} = require('kaspa-wallet-grpc-node');
 
 kaspaSetup();
 
+
+const PORTS = {
+    mainnet : 16110,
+    testnet : 16210,
+    simnet : 16510,
+    devnet : 16610
+}
+const NETWORK = 'testnet';
+
 const rpc = new RPC({
     clientConfig:{
-        host:"127.0.0.1:16210"
+        host:"127.0.0.1:"+PORTS[NETWORK]
+//        host:"127.0.0.1:16110"
     }
-});
-//rpc.client.verbose = true;
+});//rpc.client.verbose = true;
 
 Wallet.setRPC(rpc)
 

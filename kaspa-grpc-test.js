@@ -2,8 +2,19 @@
 const {Client} = require('kaspa-grpc');
 
 
+const PORTS = {
+    mainnet : 16110,
+    testnet : 16210,
+    simnet : 16510,
+    devnet : 16610
+}
+const NETWORK = 'devnet';
+
 const client = new Client({
-    host:"127.0.0.1:16210"
+    clientConfig:{
+        host:"127.0.0.1:"+PORTS[NETWORK]
+//        host:"127.0.0.1:16110"
+    }
 });
 client.connect();
 client.verbose = true;
