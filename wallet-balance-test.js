@@ -2,29 +2,13 @@
 
 const { Wallet, initKaspaFramework } = require('kaspa-wallet');
 const { RPC } = require('kaspa-grpc-node');
-// initKaspaFramework();
 
-// const PORTS = {
-//     kaspa : 16110,
-//     kaspatest : 16210,
-//     kaspasim : 16510,
-//     kaspadev : 16610
-// }
-//const NETWORK = 'devnet';
 const network = 'kaspatest';
-
 const rpc = new RPC({
     clientConfig:{
         host:"127.0.0.1:"+Wallet.networkTypes[network].port
-//        host:"127.0.0.1:16110"
     }
 });
-//rpc.client.verbose = true;
-console.log('A');
-
-// Wallet.setRPC(rpc);
-
-console.log('B');
 
 let dump = (label, text, deco1="-", deco2="=")=>{
     console.log(`\n${label}:\n${deco1.repeat(100)}\n${text}\n${deco2.repeat(100)}\n`)
@@ -91,11 +75,5 @@ const run = async ()=>{
 
     //rpc.disconnect();
 }
-
-// console.log("waiting wallet");
-// Wallet.onReady(()=>{
-//     console.log("wallet ready");
-//     run();
-// });
 
 run();
