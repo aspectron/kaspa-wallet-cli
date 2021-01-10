@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
 const { Command } = require('commander');
-const { Wallet, kaspaSetup } = require('kaspa-wallet');
-const {RPC} = require('kaspa-wallet-grpc-node');
+const { Wallet, initKaspaFramework } = require('kaspa-wallet');
+const { RPC } = require('kaspa-grpc-node');
 
 
 kaspaSetup();
