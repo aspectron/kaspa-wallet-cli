@@ -5,28 +5,18 @@ let chunks = bitcoin.script.decompile(Buffer.from("41bedd5e5b3079ff715b0ecb86c80
 console.log("chunks", chunks)
 */
 
-const { Wallet, kaspaSetup } = require('kaspa-wallet');
+const { Wallet, initKaspaFramework } = require('kaspa-wallet');
 const {RPC} = require('kaspa-wallet-grpc-node');
 
-kaspaSetup();
-
-
-const PORTS = {
-    mainnet : 16110,
-    testnet : 16210,
-    simnet : 16510,
-    devnet : 16610
-}
-const NETWORK = 'testnet';
+const network = 'kaspatest';
 
 const rpc = new RPC({
     clientConfig:{
-        host:"127.0.0.1:"+PORTS[NETWORK]
+        host:"127.0.0.1:"+Wallet.networkTypes[network].port
 //        host:"127.0.0.1:16110"
     }
-});//rpc.client.verbose = true;
+});
 
-Wallet.setRPC(rpc)
 
 
 let dump = (label, text, deco1="-", deco2="=")=>{
@@ -35,8 +25,11 @@ let dump = (label, text, deco1="-", deco2="=")=>{
 
 const run = async ()=>{
 
+
+    await initKaspaFramework();
+
     //let wallet = Wallet.fromMnemonic("live excuse stone acquire remain later core enjoy visual advice body play");
-    let wallet = Wallet.fromMnemonic("wasp involve attitude matter power weekend two income nephew super way focus");
+    let wallet = Wallet.fromMnemonic("wasp involve attitude matter power weekend two income nephew super way focus", { network, rpc });
     dump("mnemonic created", wallet.mnemonic)
 
     wallet.on("blue-score-changed", (result)=>{
@@ -101,9 +94,9 @@ const run = async ()=>{
     rpc.disconnect();
 }
 
-Wallet.onReady(()=>{
-    run();
-});
+// Wallet.onReady(()=>{
+//     run();
+// });
 
 const testNotification = async(name="BlockAdded")=>{
     let callback = (response)=>{
@@ -117,5 +110,5 @@ const testNotification = async(name="BlockAdded")=>{
     console.log(`notify${name}Response`, response);
 }
 
-
+run();
 //testNotification();
