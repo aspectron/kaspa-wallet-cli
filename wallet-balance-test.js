@@ -3,7 +3,7 @@
 const { Wallet, initKaspaFramework } = require('kaspa-wallet');
 const { RPC } = require('kaspa-grpc-node');
 
-const network = 'kaspatest';
+const network = 'kaspadev';
 const rpc = new RPC({
     clientConfig:{
         host:"127.0.0.1:"+Wallet.networkTypes[network].port

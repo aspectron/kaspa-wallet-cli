@@ -12,9 +12,12 @@
     "@grpc/grpc-js": "*",
     "@grpc/proto-loader": "*",
     "@types/request": "^2.48.5",
+    "bitcore-lib-cash": "^8.23.1",
+    "blake2": "^4.0.2",
+    "blake2b-wasm": "^2.1.0",
     "commander": "^6.2.0",
-    "kaspa-wallet": "aspectron/kaspa-wallet",
-    "kaspa-grpc-node": "aspectron/kaspa-grpc-node",
-    "kaspa-grpc": "aspectron/kaspa-grpc"
+    "kaspa-grpc": "file:../kaspa-grpc",
+    "kaspa-wallet": "file:../kaspa-wallet",
+    "kaspa-grpc-node": "file:../kaspa-grpc-node"
   }
 }

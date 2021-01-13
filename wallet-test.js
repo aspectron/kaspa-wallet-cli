@@ -6,16 +6,17 @@ console.log("chunks", chunks)
 */
 
 const { Wallet, initKaspaFramework } = require('kaspa-wallet');
-const {RPC} = require('kaspa-wallet-grpc-node');
+const {RPC} = require('kaspa-grpc-node');
 
-const network = 'kaspatest';
+const network = 'kaspadev';
 
 const rpc = new RPC({
     clientConfig:{
         host:"127.0.0.1:"+Wallet.networkTypes[network].port
-//        host:"127.0.0.1:16110"
+        //host:"127.0.0.1:16110"
     }
 });
+//rpc.client.verbose = true;
 
 
 
@@ -42,6 +43,7 @@ const run = async ()=>{
         console.log("syncVirtualSelectedParentBlueScore:error", e)
     })
 
+    //await new Promise((resolve)=>setTimeout(resolve, 10000));
     
     let debugInfo = await wallet.addressDiscovery(20, true)
     .catch(e=>{
@@ -51,6 +53,8 @@ const run = async ()=>{
     dump("receiveAddress", wallet.receiveAddress)
     if(!debugInfo)
         return
+
+    //console.log("debugInfo", debugInfo)
     /*
     debugInfo.forEach((info, address)=>{
         console.log("debugInfo",  address, info)
@@ -79,7 +83,7 @@ const run = async ()=>{
         console.log("\nrequestTransactions:response", response)
         */
     //}
-
+    //return;
     let response = await wallet.submitTransaction({
         toAddr: "kaspatest:qrhefqj5c80m59d9cdx4ssxw96vguvn9fgy6yc0qtd",
         amount: 1000,
@@ -94,9 +98,6 @@ const run = async ()=>{
     rpc.disconnect();
 }
 
-// Wallet.onReady(()=>{
-//     run();
-// });
 
 const testNotification = async(name="BlockAdded")=>{
     let callback = (response)=>{
