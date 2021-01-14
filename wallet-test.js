@@ -29,7 +29,7 @@ const run = async ()=>{
 
     await initKaspaFramework();
 
-    //let wallet = Wallet.fromMnemonic("live excuse stone acquire remain later core enjoy visual advice body play");
+    //let wallet = Wallet.fromMnemonic("live excuse stone acquire remain later core enjoy visual advice body play", { network, rpc });
     let wallet = Wallet.fromMnemonic("wasp involve attitude matter power weekend two income nephew super way focus", { network, rpc });
     dump("mnemonic created", wallet.mnemonic)
 
@@ -85,9 +85,9 @@ const run = async ()=>{
     //}
     //return;
     let response = await wallet.submitTransaction({
-        toAddr: "kaspatest:qrhefqj5c80m59d9cdx4ssxw96vguvn9fgy6yc0qtd",
-        amount: 1000,
-        fee: 400
+        toAddr: "kaspadev:qpfp3umjvnx40vrqtyy0drsn08942dkjhcsqh73eav",
+        amount: 5000000000,
+        fee: 500
     }, true).catch(async (error)=>{
         console.log("\n\nerror", error)
     })
