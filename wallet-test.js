@@ -6,6 +6,8 @@ console.log("chunks", chunks)
 */
 
 const { Wallet, initKaspaFramework } = require('kaspa-wallet');
+Wallet.setDebugLevel(2);
+
 const {RPC} = require('kaspa-grpc-node');
 
 const network = 'kaspadev';
@@ -88,7 +90,7 @@ const run = async ()=>{
         toAddr: "kaspadev:qpfp3umjvnx40vrqtyy0drsn08942dkjhcsqh73eav",
         amount: 5000000000,
         fee: 500
-    }, true).catch(async (error)=>{
+    }).catch(async (error)=>{
         console.log("\n\nerror", error)
     })
 
