@@ -3,6 +3,7 @@
 const { Command } = require('commander');
 const { Wallet, initKaspaFramework } = require('kaspa-wallet');
 const { RPC } = require('kaspa-grpc-node');
+const Decimal = require('decimal.js');
 
 const program = new Command();
 
@@ -59,11 +60,11 @@ class KaspaWalletCli {
         }
 
         program
-            .version('0.0.1')
+            .version('0.0.1', '--version')
             .description('Kaspa Wallet client')
             .helpOption('--help','display help for command')
 //            .option('--json','display help for command')
-            .option('--log <level>','set log level where level is [info, debug]') // TODO - propagate to Wallet.ts etc.
+            .option('--log <level>','set log level [info, debug]') // TODO - propagate to Wallet.ts etc.
             .option('--testnet','use testnet network')
             .option('--devnet','use testnet network')
             .option('--simnet','use testnet network')
@@ -105,9 +106,41 @@ class KaspaWalletCli {
             });
 
         program
-            .command('send')
-            .description('monitor wallet activity')
-            .action(async (cmd, options) => {
+            .command('send <address> <amount> [fee]')
+            .description('send funds to an address', {
+                address : 'kaspa network address',
+                amount : 'amount in KSP',
+                fee : 'transaction priority fee'
+            })
+            .action(async (address, amount, fee) => {
+                // console.log({address,amount,fees});
+                try {
+                    amount = new Decimal(amount);
+                } catch(ex) {
+                    console.log(`Error parsing amount: ${amount}`);
+                    console.log(ex.toString());
+                    return;
+                }
+                if(fee) {
+                    try {
+                        fee = new Decimal(fee);
+                    } catch(ex) {
+                        console.log(`Error parsing fees: ${fee}`);
+                        console.log(ex.toString());
+                        return;
+                    }
+                }
+
+                const { network, rpc } = this;
+                this.wallet = Wallet.fromMnemonic("wasp involve attitude matter power weekend two income nephew super way focus", { network, rpc });
+                let response = await this.wallet.submitTransaction({
+                    toAddr: address,
+                    amount,
+                    fee,
+                }, true);
+
+                console.log(response);
+
             });
 
         program
