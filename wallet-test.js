@@ -37,11 +37,11 @@ const run = async ()=>{
     //kaspadev:qpkanezz2ptk439km3se7tyfxf4v7dn7nuy7ajgan4
 
     //Wallet B
-    //let wallet = Wallet.fromMnemonic("live excuse stone acquire remain later core enjoy visual advice body play", { network, rpc });
+    let wallet = Wallet.fromMnemonic("live excuse stone acquire remain later core enjoy visual advice body play", { network, rpc });
     //kaspadev:qpfp3umjvnx40vrqtyy0drsn08942dkjhcsqh73eav
 
     //Wallet C
-    let wallet = Wallet.fromMnemonic("wasp involve attitude matter power weekend two income nephew super way focus", { network, rpc });
+    //let wallet = Wallet.fromMnemonic("wasp involve attitude matter power weekend two income nephew super way focus", { network, rpc });
     //kaspadev:qpuyhaxz2chn3lsvf8g7q5uvaezpp5m7pygf2jzn8d
 
     dump("mnemonic created", wallet.mnemonic)
@@ -51,9 +51,8 @@ const run = async ()=>{
         console.log("blue-score-changed:result, blueScore", result, blueScore)
     })
 
-    wallet.syncVirtualSelectedParentBlueScore()
-    .catch(e=>{
-        console.log("syncVirtualSelectedParentBlueScore:error", e)
+    wallet.on("balance-update", (result)=>{
+        console.log("balance-update:result", result)
     })
 
     //await new Promise((resolve)=>setTimeout(resolve, 10000));
@@ -73,38 +72,14 @@ const run = async ()=>{
         console.log("debugInfo",  address, info)
     })
     */
-
-
-    //return
-
-    //let {utxoIds, utxos} = wallet.utxoSet.selectUtxos(1000);
-    //console.log("utxos", utxos);
-    //let utxo = utxos[0];
-    //if(utxo){
-        //let info = debugInfo.get(utxo.txId);
-        //console.log("txid --> utxos,address", utxo.txId)
-        //console.log(info);
-        /*
-        let req = {
-            ids:[{bytes: Buffer.from(utxo.txId, 'hex').toString("base64")}]
-        }
-        console.log("requestTransactions:req", JSON.stringify({"requestTransactions":req}))
-        let response = await rpc.request("requestTransactions", req).catch(e=>{
-            console.log("requestTransactions:error", e)
-        })
-
-        console.log("\nrequestTransactions:response", response)
-        */
-    //}
-    //return;
+    
     let response = await wallet.submitTransaction({
         //toAddr: "kaspadev:qpfp3umjvnx40vrqtyy0drsn08942dkjhcsqh73eav", //Wallet B
         //toAddr: "kaspadev:qzpf5d3w7vwgfvu8zy993xupj2yewwfngg439f58nn",  //Wallet B
         //toAddr: "kaspadev:qpuyhaxz2chn3lsvf8g7q5uvaezpp5m7pygf2jzn8d", //Wallet C
-        toAddr: "kaspadev:qrhe3f7js0rusmmmzqwh7d277xfklc2h55e4my9fxz", //Wallet C
-        //toAddr: "kaspadev:qpkanezz2ptk439km3se7tyfxf4v7dn7nuy7ajgan4",
-        amount: 25000000000,
-        fee: 1086
+        //toAddr: "kaspadev:qrhe3f7js0rusmmmzqwh7d277xfklc2h55e4my9fxz", //Wallet C
+        toAddr: "kaspadev:qpef0h00dcne5dmah0lmyzgplrn4cqh9rq3qcr8uqc", //Wallet B
+        amount: 200000000
     }).catch(async (error)=>{
         console.log("\n\nerror", error)
     })
