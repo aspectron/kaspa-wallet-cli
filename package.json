@@ -1,7 +1,7 @@
 {
   "name": "kaspa-wallet-cli",
-  "version": "0.0.1",
-  "description": "Kaspa Command Line Module",
+  "version": "0.0.2",
+  "description": "Kaspa Command Line Wallet Interface",
   "main": "wallet.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -16,8 +16,8 @@
     "blake2": "^4.0.2",
     "blake2b-wasm": "^2.1.0",
     "commander": "^6.2.0",
-    "kaspa-grpc": "file:../kaspa-grpc",
-    "kaspa-wallet": "file:../kaspa-wallet",
-    "kaspa-grpc-node": "file:../kaspa-grpc-node"
+    "kaspa-grpc": "aspectron/kaspa-grpc",
+    "kaspa-grpc-node": "aspectron/kaspa-grpc-node",
+    "kaspa-wallet": "aspectron/kaspa-wallet"
   }
 }
