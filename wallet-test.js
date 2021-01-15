@@ -6,7 +6,7 @@ console.log("chunks", chunks)
 */
 
 const { Wallet, initKaspaFramework } = require('kaspa-wallet');
-Wallet.setDebugLevel(2);
+Wallet.setDebugLevel(0);
 
 const {RPC} = require('kaspa-grpc-node');
 
@@ -30,9 +30,20 @@ const run = async ()=>{
 
 
     await initKaspaFramework();
+    //let wallet  = new Wallet(null, null, {network, rpc })
 
+    //Wallet A
+    //let wallet = Wallet.fromMnemonic("noodle confirm peanut camera office frown title century dream vacuum number shed", {network, rpc });
+    //kaspadev:qpkanezz2ptk439km3se7tyfxf4v7dn7nuy7ajgan4
+
+    //Wallet B
     //let wallet = Wallet.fromMnemonic("live excuse stone acquire remain later core enjoy visual advice body play", { network, rpc });
+    //kaspadev:qpfp3umjvnx40vrqtyy0drsn08942dkjhcsqh73eav
+
+    //Wallet C
     let wallet = Wallet.fromMnemonic("wasp involve attitude matter power weekend two income nephew super way focus", { network, rpc });
+    //kaspadev:qpuyhaxz2chn3lsvf8g7q5uvaezpp5m7pygf2jzn8d
+
     dump("mnemonic created", wallet.mnemonic)
 
     wallet.on("blue-score-changed", (result)=>{
@@ -87,9 +98,13 @@ const run = async ()=>{
     //}
     //return;
     let response = await wallet.submitTransaction({
-        toAddr: "kaspadev:qpfp3umjvnx40vrqtyy0drsn08942dkjhcsqh73eav",
-        amount: 5000000000,
-        fee: 500
+        //toAddr: "kaspadev:qpfp3umjvnx40vrqtyy0drsn08942dkjhcsqh73eav", //Wallet B
+        //toAddr: "kaspadev:qzpf5d3w7vwgfvu8zy993xupj2yewwfngg439f58nn",  //Wallet B
+        //toAddr: "kaspadev:qpuyhaxz2chn3lsvf8g7q5uvaezpp5m7pygf2jzn8d", //Wallet C
+        toAddr: "kaspadev:qrhe3f7js0rusmmmzqwh7d277xfklc2h55e4my9fxz", //Wallet C
+        //toAddr: "kaspadev:qpkanezz2ptk439km3se7tyfxf4v7dn7nuy7ajgan4",
+        amount: 25000000000,
+        fee: 1086
     }).catch(async (error)=>{
         console.log("\n\nerror", error)
     })
@@ -97,7 +112,7 @@ const run = async ()=>{
     console.log("\n\nResponse", response)
 
 
-    rpc.disconnect();
+    //rpc.disconnect();
 }
 
 
