@@ -1,9 +1,4 @@
 #!/usr/bin/env node
-/*
-const bitcoin = require('bitcoinjs-lib');
-let chunks = bitcoin.script.decompile(Buffer.from("41bedd5e5b3079ff715b0ecb86c80d4133b3676665726ac07b34733d1e218f6fe1f28fdbdb327c749783dfd6920738bfdcf2a3c1989a48417fef26cb416002073d012103836c831ff77d759e0b1b2c9d7d9c39eb2b1c01da327b3e48b07e95b7ea3576a2", "hex"));
-console.log("chunks", chunks)
-*/
 
 const { Wallet, initKaspaFramework } = require('kaspa-wallet');
 
@@ -36,7 +31,7 @@ const run = async ()=>{
     //kaspadev:qpkanezz2ptk439km3se7tyfxf4v7dn7nuy7ajgan4
 
     //Wallet B
-    let wallet = Wallet.fromMnemonic("live excuse stone acquire remain later core enjoy visual advice body play", { network, rpc });
+    let wallet = Wallet.fromMnemonic("live excuse stone acquire remain later core enjoy visual advice body play", { network, rpc }, {syncOnce:true});
     //kaspadev:qpfp3umjvnx40vrqtyy0drsn08942dkjhcsqh73eav
 
     //Wallet C
@@ -45,7 +40,7 @@ const run = async ()=>{
 
     dump("mnemonic created", wallet.mnemonic)
 
-    wallet.setLogLevel(1);
+    wallet.setLogLevel('info');
 
     wallet.on("blue-score-changed", (result)=>{
         let {blueScore} = result;
@@ -56,23 +51,10 @@ const run = async ()=>{
         console.log("balance-update:result", result)
     })
 
-    //await new Promise((resolve)=>setTimeout(resolve, 10000));
-    
-    let debugInfo = await wallet.addressDiscovery(20, true)
-    .catch(e=>{
-        console.log("addressDiscovery:error", e)
-    })
-
-    dump("receiveAddress", wallet.receiveAddress)
-    if(!debugInfo)
-        return
-
-    //console.log("debugInfo", debugInfo)
-    /*
-    debugInfo.forEach((info, address)=>{
-        console.log("debugInfo",  address, info)
-    })
-    */
+    console.log("sync........... started")
+    await wallet.sync();
+    console.log("sync........... complete")
+    return
     
     let response = await wallet.submitTransaction({
         //toAddr: "kaspadev:qpfp3umjvnx40vrqtyy0drsn08942dkjhcsqh73eav", //Wallet B
