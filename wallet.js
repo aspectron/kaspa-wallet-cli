@@ -46,7 +46,7 @@ class KaspaWalletCli {
         return this.rpc_;
     }
 
-    setupLogs(wallet, cmd){
+    setupLogs(wallet){
         //!!! this should be this.options.log
         // const {loglevel} = cmd.parent;
         // //console.log("setupLogs:loglevel", loglevel, cmd)
@@ -103,7 +103,8 @@ class KaspaWalletCli {
                 // console.log('network:',this.network);
                 const { network, rpc } = this;
                 this.wallet = Wallet.fromMnemonic("wasp involve attitude matter power weekend two income nephew super way focus", { network, rpc });
-                this.setupLogs(this.wallet, cmd)
+                this.setupLogs(this.wallet);
+                await this.wallet.sync(true);
                 this.wallet.on("balance-update", (detail)=>{
                     const { balance, available, pending } = detail;
                     console.log(`Balance Update:`, detail);
@@ -126,7 +127,9 @@ class KaspaWalletCli {
                 // console.log('network:',this.network);
                 const { network, rpc } = this;
                 this.wallet = Wallet.fromMnemonic("wasp involve attitude matter power weekend two income nephew super way focus", { network, rpc });
-                this.setupLogs(this.wallet, cmd);
+                this.setupLogs(this.wallet);
+                await this.wallet.sync(true);
+                console.log(this.wallet.balance);
    
             });
 
@@ -159,7 +162,7 @@ class KaspaWalletCli {
 
                 const { network, rpc } = this;
                 this.wallet = Wallet.fromMnemonic("wasp involve attitude matter power weekend two income nephew super way focus", { network, rpc });
-                this.setupLogs(this.wallet, cmd)
+                this.setupLogs(this.wallet)
                 let response = await this.wallet.submitTransaction({
                     toAddr: address,
                     amount,
@@ -194,7 +197,7 @@ class KaspaWalletCli {
                 //console.log(Wallet)
                 //console.log(cmd.password)
                 const wallet = new Wallet(null, null, {network, rpc});
-                this.setupLogs(wallet, cmd)
+                this.setupLogs(wallet)
                 const encryptedMnemonic = await wallet.export(cmd.password);
 
                 dump("mnemonic created", wallet.mnemonic)
