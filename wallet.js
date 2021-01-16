@@ -79,8 +79,8 @@ class KaspaWalletCli {
             .helpOption('--help','display help for command')
             .option('--log <level>','set log level [info, debug]') // TODO - propagate to Wallet.ts etc.
             .option('--testnet','use testnet network')
-            .option('--devnet','use testnet network')
-            .option('--simnet','use testnet network')
+            .option('--devnet','use devnet network')
+            .option('--simnet','use simnet network')
             .option('--rpc <address>','use custom RPC address <host:port>')
             .option('--folder <path>','use custom folder for wallet file storage') // TODO
             .option('--file <filename>','use custom wallet filename') // TODO
