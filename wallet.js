@@ -42,6 +42,14 @@ class KaspaWalletCli {
         return this.rpc_;
     }
 
+    setupLogs(wallet, cmd){
+        const {loglevel} = cmd.parent;
+        //console.log("setupLogs:loglevel", loglevel, cmd)
+        if(!loglevel)
+            return
+        wallet.setLogLevel(loglevel);
+    }
+
     async main() {
 
         // console.log(Wallet.networkTypes);
@@ -70,6 +78,7 @@ class KaspaWalletCli {
             .option('--rpc <address>','use custom RPC address <host:port>')
             .option('--folder <path>','use custom folder for wallet file storage') // TODO
             .option('--file <filename>','use custom wallet filename') // TODO
+            .option('--loglevel <loglevel>','log level (info|debug)')
             // .option('--help','display help for command')
             ;
 
@@ -88,7 +97,7 @@ class KaspaWalletCli {
                 // console.log('network:',this.network);
                 const { network, rpc } = this;
                 this.wallet = Wallet.fromMnemonic("wasp involve attitude matter power weekend two income nephew super way focus", { network, rpc });
-
+                this.setupLogs(this.wallet, cmd)
                 this.wallet.on("balance-update", (detail)=>{
                     const { balance, available, pending } = detail;
                     console.log(`Balance Update:`, detail);
@@ -132,6 +141,7 @@ class KaspaWalletCli {
 
                 const { network, rpc } = this;
                 this.wallet = Wallet.fromMnemonic("wasp involve attitude matter power weekend two income nephew super way focus", { network, rpc });
+                this.setupLogs(this.wallet, cmd)
                 let response = await this.wallet.submitTransaction({
                     toAddr: address,
                     amount,
@@ -153,6 +163,7 @@ class KaspaWalletCli {
             .command('create')
             .description('Create Kaspa wallet')
             .requiredOption('-p, --password <password>', "Password for wallet")
+            .option('-l,--loglevel <loglevel>', "log level (info|debug)")
             .action(async (cmd, options) => {
                 if(!cmd.password){
                     console.error("password is required")
@@ -160,17 +171,18 @@ class KaspaWalletCli {
                     return;
                 }
 
-                let { network } = this;
+                let { network, rpc } = this;
 
                 //console.log(Wallet)
                 //console.log(cmd.password)
-                const wallet = new Wallet();
+                const wallet = new Wallet(null, null, {network, rpc});
+                this.setupLogs(wallet, cmd)
                 const encryptedMnemonic = await wallet.export(cmd.password);
 
                 dump("mnemonic created", wallet.mnemonic)
                 dump("Encrypted Mnemonic", encryptedMnemonic)
 
-                let _wallet = await Wallet.import(cmd.password, encryptedMnemonic)
+                let _wallet = await Wallet.import(cmd.password, encryptedMnemonic, { network, rpc })
                 dump("wallet imported", _wallet.mnemonic)
             })
         /*

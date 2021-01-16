@@ -6,7 +6,6 @@ console.log("chunks", chunks)
 */
 
 const { Wallet, initKaspaFramework } = require('kaspa-wallet');
-Wallet.setDebugLevel(0);
 
 const {RPC} = require('kaspa-grpc-node');
 
@@ -45,6 +44,8 @@ const run = async ()=>{
     //kaspadev:qpuyhaxz2chn3lsvf8g7q5uvaezpp5m7pygf2jzn8d
 
     dump("mnemonic created", wallet.mnemonic)
+
+    wallet.setLogLevel(1);
 
     wallet.on("blue-score-changed", (result)=>{
         let {blueScore} = result;
