@@ -63,7 +63,6 @@ class KaspaWalletCli {
             .version('0.0.1', '--version')
             .description('Kaspa Wallet client')
             .helpOption('--help','display help for command')
-//            .option('--json','display help for command')
             .option('--log <level>','set log level [info, debug]') // TODO - propagate to Wallet.ts etc.
             .option('--testnet','use testnet network')
             .option('--devnet','use testnet network')
