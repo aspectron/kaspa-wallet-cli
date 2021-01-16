@@ -20,7 +20,11 @@ class KaspaWalletCli {
     }
 
     get options() {
-        return program.opts();
+        if(!this._options) {
+            this._options = program.opts();
+            Object.entries(this._options).forEach(([k,v])=>{ if(v === undefined) delete this._options[k]; });
+        }
+        return this._options;
     }
 
     get network() {
@@ -43,11 +47,13 @@ class KaspaWalletCli {
     }
 
     setupLogs(wallet, cmd){
-        const {loglevel} = cmd.parent;
-        //console.log("setupLogs:loglevel", loglevel, cmd)
-        if(!loglevel)
-            return
-        wallet.setLogLevel(loglevel);
+        //!!! this should be this.options.log
+        // const {loglevel} = cmd.parent;
+        // //console.log("setupLogs:loglevel", loglevel, cmd)
+        // if(!loglevel)
+        //     return
+        // wallet.setLogLevel(loglevel);
+        wallet.setLogLevel(this.options.log || 'info');
     }
 
     async main() {
@@ -112,6 +118,18 @@ class KaspaWalletCli {
                 })
    
             });
+
+        program
+            .command('balance')
+            .description('display wallet balance')
+            .action(async (cmd, options) => {
+                // console.log('network:',this.network);
+                const { network, rpc } = this;
+                this.wallet = Wallet.fromMnemonic("wasp involve attitude matter power weekend two income nephew super way focus", { network, rpc });
+                this.setupLogs(this.wallet, cmd);
+   
+            });
+
 
         program
             .command('send <address> <amount> [fee]')
