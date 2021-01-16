@@ -43,6 +43,8 @@ class KaspaWalletCli {
         const { options } = this;
         const host = options.rpc || `127.0.0.1:${port}`;
         this.rpc_ = new RPC({ clientConfig:{ host } });
+        //if(this._options.log == 'info')
+        //    this.rpc_.client.verbose = true;
         return this.rpc_;
     }
 
@@ -130,7 +132,7 @@ class KaspaWalletCli {
                 this.setupLogs(this.wallet);
                 await this.wallet.sync(true);
                 console.log(this.wallet.balance);
-   
+                rpc.disconnect();
             });
 
 
