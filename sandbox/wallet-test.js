@@ -31,7 +31,7 @@ const run = async ()=>{
     //kaspadev:qpkanezz2ptk439km3se7tyfxf4v7dn7nuy7ajgan4
 
     //Wallet B
-    let wallet = Wallet.fromMnemonic("live excuse stone acquire remain later core enjoy visual advice body play", { network, rpc }, {syncOnce:true});
+    let wallet = Wallet.fromMnemonic("live excuse stone acquire remain later core enjoy visual advice body play", { network, rpc }, {syncOnce:true, logLevel:'info'});
     //kaspadev:qpfp3umjvnx40vrqtyy0drsn08942dkjhcsqh73eav
 
     //Wallet C
@@ -40,7 +40,7 @@ const run = async ()=>{
 
     dump("mnemonic created", wallet.mnemonic)
 
-    wallet.setLogLevel('info');
+    //wallet.setLogLevel('info');
 
     wallet.on("blue-score-changed", (result)=>{
         let {blueScore} = result;
@@ -51,9 +51,9 @@ const run = async ()=>{
         console.log("balance-update:result", result)
     })
 
-    console.log("sync........... started")
+    //console.log("sync........... started")
     await wallet.sync();
-    console.log("sync........... complete")
+    //console.log("sync........... complete")
     return
     
     let response = await wallet.submitTransaction({
