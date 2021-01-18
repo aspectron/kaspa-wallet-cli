@@ -1,75 +1,118 @@
-# kaspa-wallet-cli
+Kaspa Wallet (CLI)
+==================
 
-### Running Kaspad 
-./kaspad --utxoindex --testnet
-./kaspaminer --miningaddr=kaspatest:qq0nvlmn07f6edcdfynt4nu4l4r58rkquuvgt635ac --rpcserver=localhost:16210 --block-delay=5000 --mine-when-not-synced --testnet
+Kaspa Wallet command-line interface.
 
-### Running the wallet
-
-Kaspa Wallet currently connects to a local (default) instance of Kaspad gRPC
+Cloning Kaspa Wallet
+--------------------
 
 ```
 git clone git@github.com:aspectron/kaspa-wallet-cli
 cd kaspa-wallet-cli
 npm install
-
-node rpc -h
-node wallet-test
 ```
 
-```
-$ node rpc -h
-Usage: rpc [options] [command]
+Running Kaspa Wallet
+--------------------
 
-Kaspa gRPC Test client
+```
+$ node wallet
+Usage: wallet [options] [command]
+
+Kaspa Wallet client
 
 Options:
-  -V, --version                                output the version number
-  -h, --help                                   display help for command
+  --version                      output the version number
+  --log <level>                  set log level error, warn, info, verbose, debug
+  --verbose                      log wallet activity
+  --debug                        debug wallet activity
+  --testnet                      use testnet network
+  --devnet                       use devnet network
+  --simnet                       use simnet network
+  --rpc <address>                use custom RPC address <host:port>
+  --folder <path>                use custom folder for wallet file storage
+  --file <filename>              use custom wallet filename
+  --help                         display help for command
 
 Commands:
-  run [options]                                Run gRPC "run -m <method> -j <json_data>"
-  requestBlockLocator [options]                gRPC call requestBlockLocator
-  requestAddresses [options]                   gRPC call requestAddresses
-  requestHeaders [options]                     gRPC call requestHeaders
-  requestNextHeaders                           gRPC call requestNextHeaders
-  requestRelayBlocks [options]                 gRPC call requestRelayBlocks
-  requestSelectedTip                           gRPC call requestSelectedTip
-  requestTransactions [options]                gRPC call requestTransactions
-  requestIBDRootUTXOSetAndBlock [options]      gRPC call requestIBDRootUTXOSetAndBlock
-  requestIBDBlocks [options]                   gRPC call requestIBDBlocks
-  getCurrentNetworkRequest                     gRPC call getCurrentNetworkRequest
-  submitBlockRequest [options]                 gRPC call submitBlockRequest
-  getBlockTemplateRequest [options]            gRPC call getBlockTemplateRequest
-  notifyBlockAddedRequest                      gRPC call notifyBlockAddedRequest
-  getPeerAddressesRequest                      gRPC call getPeerAddressesRequest
-  getSelectedTipHashRequest                    gRPC call getSelectedTipHashRequest
-  getMempoolEntryRequest [options]             gRPC call getMempoolEntryRequest
-  getConnectedPeerInfoRequest                  gRPC call getConnectedPeerInfoRequest
-  addPeerRequest [options]                     gRPC call addPeerRequest
-  submitTransactionRequest [options]           gRPC call submitTransactionRequest
-  notifyChainChangedRequest                    gRPC call notifyChainChangedRequest
-  getBlockRequest [options]                    gRPC call getBlockRequest
-  getSubnetworkRequest [options]               gRPC call getSubnetworkRequest
-  getChainFromBlockRequest [options]           gRPC call getChainFromBlockRequest
-  getBlocksRequest [options]                   gRPC call getBlocksRequest
-  getBlockCountRequest                         gRPC call getBlockCountRequest
-  getBlockDagInfoRequest                       gRPC call getBlockDagInfoRequest
-  resolveFinalityConflictRequest [options]     gRPC call resolveFinalityConflictRequest
-  notifyFinalityConflictsRequest               gRPC call notifyFinalityConflictsRequest
-  getMempoolEntriesRequest                     gRPC call getMempoolEntriesRequest
-  shutDownRequest                              gRPC call shutDownRequest
-  getHeadersRequest [options]                  gRPC call getHeadersRequest
-  notifyTransactionAddedRequest [options]      gRPC call notifyTransactionAddedRequest
-  notifyUTXOOfAddressChangedRequest [options]  gRPC call notifyUTXOOfAddressChangedRequest
-  getUTXOsByAddressRequest [options]           gRPC call getUTXOsByAddressRequest
-  getTransactionsByAddressesRequest [options]  gRPC call getTransactionsByAddressesRequest
-  help [command]                               display help for command
+  monitor                        monitor wallet activity
+  balance                        display wallet balance
+  send <address> <amount> [fee]  send funds to an address
+  create [options]               Create Kaspa wallet
+  help [command]                 display help for command
 
+```
+
+
+
+gRPC Interface Utility
+----------------------
+
+Kaspa Wallet provides a test utility `rpc.js` allowing you to send RPC commands to `kaspad` from the terminal:
+
+```
+$ node rpc
+Usage: rpc [options] [command]
+
+Kaspa gRPC client
+
+Options:
+  --version                                         output the version number
+  --testnet                                         use testnet network
+  --devnet                                          use devnet network
+  --simnet                                          use simnet network
+  -h, --help                                        display help for command
+
+Commands:
+  run [options]                                     Run gRPC "run -m <method> -j <json_data>"
+  requestBlockLocator [options]                     gRPC call requestBlockLocator
+  requestAddresses [options]                        gRPC call requestAddresses
+  requestHeaders [options]                          gRPC call requestHeaders
+  requestNextHeaders                                gRPC call requestNextHeaders
+  requestRelayBlocks [options]                      gRPC call requestRelayBlocks
+  requestTransactions [options]                     gRPC call requestTransactions
+  requestIBDRootUTXOSetAndBlock [options]           gRPC call requestIBDRootUTXOSetAndBlock
+  requestIBDBlocks [options]                        gRPC call requestIBDBlocks
+  requestIBDRootHash                                gRPC call requestIBDRootHash
+  getCurrentNetwork                                 gRPC call getCurrentNetwork
+  submitBlock [options]                             gRPC call submitBlock
+  getBlockTemplate [options]                        gRPC call getBlockTemplate
+  notifyBlockAdded                                  gRPC call notifyBlockAdded
+  getPeerAddresses                                  gRPC call getPeerAddresses
+  getSelectedTipHash                                gRPC call getSelectedTipHash
+  getMempoolEntry [options]                         gRPC call getMempoolEntry
+  getConnectedPeerInfo                              gRPC call getConnectedPeerInfo
+  addPeer [options]                                 gRPC call addPeer
+  submitTransaction [options]                       gRPC call submitTransaction
+  notifyVirtualSelectedParentChainChanged           gRPC call notifyVirtualSelectedParentChainChanged
+  getBlock [options]                                gRPC call getBlock
+  getSubnetwork [options]                           gRPC call getSubnetwork
+  getVirtualSelectedParentChainFromBlock [options]  gRPC call getVirtualSelectedParentChainFromBlock
+  getBlocks [options]                               gRPC call getBlocks
+  getBlockCount                                     gRPC call getBlockCount
+  getBlockDagInfo                                   gRPC call getBlockDagInfo
+  resolveFinalityConflict [options]                 gRPC call resolveFinalityConflict
+  notifyFinalityConflicts                           gRPC call notifyFinalityConflicts
+  getMempoolEntries                                 gRPC call getMempoolEntries
+  shutDown                                          gRPC call shutDown
+  getHeaders [options]                              gRPC call getHeaders
+  notifyUtxosChanged [options]                      gRPC call notifyUtxosChanged
+  getUtxosByAddresses [options]                     gRPC call getUtxosByAddresses
+  getVirtualSelectedParentBlueScore                 gRPC call getVirtualSelectedParentBlueScore
+  notifyVirtualSelectedParentBlueScoreChanged       gRPC call notifyVirtualSelectedParentBlueScoreChanged
+  help [command]                                    display help for command
   ```
 
-  #### Example
+RPC Example
+-----------
+```
+node rpc run -m getTransactionsByAddressesRequest -j '{"addresses":["kaspatest:qr32vna4u8wdamddwaf8853gt52dsauyp59zlcwd5k"], "startingBlockHash":""}'
+```
 
-  ```
-  node rpc run -m getTransactionsByAddressesRequest -j '{"addresses":["kaspatest:qr32vna4u8wdamddwaf8853gt52dsauyp59zlcwd5k"], "startingBlockHash":""}'
-  ```
+Running Kaspad
+--------------
+
+```sh
+./kaspad --utxoindex --testnet
+./kaspaminer --miningaddr=kaspatest:qq0nvlmn07f6edcdfynt4nu4l4r58rkquuvgt635ac --rpcserver=localhost:16210 --block-delay=5000 --mine-when-not-synced --testnet
+```
