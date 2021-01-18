@@ -1,7 +1,7 @@
 Kaspa Wallet (CLI)
 ==================
 
-Kaspa Wallet command-line interface build on top of [Kaspa Wallet](https://github.com/aspectron/kaspa-wallet) library.
+Kaspa Wallet command-line interface build on top of [Kaspa Wallet](https://github.com/aspectron/kaspa-wallet) framework.
 
 This command-line wallet is compatible with [KDX](https://kdx.app)
 
