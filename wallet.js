@@ -102,13 +102,12 @@ class KaspaWalletCli {
             // .option('--help','display help for command')
             ;
 
-        program
-            .command('test')
-            .description('internal testing')
-            .action(async (cmd, options) => {
-                console.log('current network:',this.network);
-            });
-
+        // program
+        //     .command('test')
+        //     .description('internal testing')
+        //     .action(async (cmd, options) => {
+        //         console.log('current network:',this.network);
+        //     });
 
         program
             .command('monitor')
@@ -196,12 +195,11 @@ class KaspaWalletCli {
 
             });
 
-        program
-            .command('info')
-            .description('monitor wallet activity')
-            .action(async (cmd, options) => {
-            })
-
+        // program
+        //     .command('info')
+        //     .description('monitor wallet activity')
+        //     .action(async (cmd, options) => {
+        //     })
 
         program
             .command('create')
