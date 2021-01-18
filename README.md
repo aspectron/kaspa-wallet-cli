@@ -5,6 +5,8 @@ Kaspa Wallet command-line interface build on top of [Kaspa Wallet](https://githu
 
 This command-line wallet is compatible with [KDX](https://kdx.app)
 
+**PLEASE NOTE: This project is under heavy development**
+
 Cloning Kaspa Wallet
 --------------------
 
