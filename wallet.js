@@ -64,8 +64,8 @@ class KaspaWalletCli {
     async main() {
 
         // temporary mnemonics used for testing
-        const mnemonic = "live excuse stone acquire remain later core enjoy visual advice body play";
-        // const mnemonic = "wasp involve attitude matter power weekend two income nephew super way focus";
+        //const mnemonic = "live excuse stone acquire remain later core enjoy visual advice body play";
+         const mnemonic = "wasp involve attitude matter power weekend two income nephew super way focus";
 
         let dump = (label, text, deco1="-", deco2="=")=>{
             console.log(`\n${label}:\n${deco1.repeat(100)}\n${text}\n${deco2.repeat(100)}\n`)
@@ -203,6 +203,18 @@ class KaspaWalletCli {
                 // console.log(this.wallet.utxoSet);
                 console.log(this.wallet.addressManager);
 
+                rpc.disconnect();
+            })
+
+        program
+            .command('address')
+            .description('Show wallet address')
+            .action(async (cmd, options) => {
+                const { network, rpc } = this;
+                console.log('getting address for', network);
+                this.wallet = Wallet.fromMnemonic(mnemonic, { network, rpc });
+                await this.wallet.sync(true);
+                log.info(this.wallet.receiveAddress);
                 rpc.disconnect();
             })
 
