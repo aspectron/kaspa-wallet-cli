@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 const { Command } = require('commander');
-const { Wallet, initKaspaFramework } = require('kaspa-wallet');
+const { Wallet, initKaspaFramework, log } = require('kaspa-wallet');
 const { RPC } = require('kaspa-grpc-node');
 const Decimal = require('decimal.js');
 
@@ -48,14 +48,18 @@ class KaspaWalletCli {
         return this.rpc_;
     }
 
+    KSP(v, pad = 0) {
+		let [int,frac] = Decimal(v||0).mul(1e-8).toFixed(8).split('.');
+        int = int.replace(/\B(?=(\d{3})+(?!\d))/g, ",").padStart(pad,' ');
+        frac = frac.replace(/0+$/,'');
+	    return frac ? `${int}.${frac}` : int;
+	}
+
+
     setupLogs(wallet){
-        //!!! this should be this.options.log
-        // const {loglevel} = cmd.parent;
-        // //console.log("setupLogs:loglevel", loglevel, cmd)
-        // if(!loglevel)
-        //     return
-        // wallet.setLogLevel(loglevel);
-        wallet.setLogLevel(this.options.log || 'info');
+        const level = (this.options.verbose&&'verbose')||(this.options.debug&&'debug')||(this.options.log)||'info';
+        wallet.setLogLevel(level);
+        log.level = level;
     }
 
     async main() {
@@ -69,24 +73,32 @@ class KaspaWalletCli {
         // });
         // Wallet.setRPC(rpc)
 
+        const mnemonic = "live excuse stone acquire remain later core enjoy visual advice body play";
+        // const mnemonic = "wasp involve attitude matter power weekend two income nephew super way focus";
 
 
         let dump = (label, text, deco1="-", deco2="=")=>{
             console.log(`\n${label}:\n${deco1.repeat(100)}\n${text}\n${deco2.repeat(100)}\n`)
         }
 
+		const logLevels = ['error','warn','info','verbose','debug'];
         program
             .version('0.0.1', '--version')
             .description('Kaspa Wallet client')
             .helpOption('--help','display help for command')
-            .option('--log <level>','set log level [info, debug]') // TODO - propagate to Wallet.ts etc.
+			.option('--log <level>',`set log level ${logLevels.join(', ')}`, (level)=>{
+				if(!logLevels.includes(level))
+					throw new Error(`Log level must be one of: ${logLevels.join(', ')}`);
+				return level;
+			})
+			.option('--verbose','log wallet activity')
+			.option('--debug','debug wallet activity')
             .option('--testnet','use testnet network')
             .option('--devnet','use devnet network')
             .option('--simnet','use simnet network')
             .option('--rpc <address>','use custom RPC address <host:port>')
             .option('--folder <path>','use custom folder for wallet file storage') // TODO
             .option('--file <filename>','use custom wallet filename') // TODO
-            .option('--loglevel <loglevel>','log level (info|debug)')
             // .option('--help','display help for command')
             ;
 
@@ -104,9 +116,9 @@ class KaspaWalletCli {
             .action(async (cmd, options) => {
                 // console.log('network:',this.network);
                 const { network, rpc } = this;
-                this.wallet = Wallet.fromMnemonic("wasp involve attitude matter power weekend two income nephew super way focus", { network, rpc });
+                this.wallet = Wallet.fromMnemonic(mnemonic, { network, rpc });
                 this.setupLogs(this.wallet);
-                await this.wallet.sync(true);
+                await this.wallet.sync();
                 this.wallet.on("balance-update", (detail)=>{
                     const { balance, available, pending } = detail;
                     console.log(`Balance Update:`, detail);
@@ -126,12 +138,21 @@ class KaspaWalletCli {
             .command('balance')
             .description('display wallet balance')
             .action(async (cmd, options) => {
-                // console.log('network:',this.network);
+                log.info(`connecting to ${this.network}`);
                 const { network, rpc } = this;
-                this.wallet = Wallet.fromMnemonic("wasp involve attitude matter power weekend two income nephew super way focus", { network, rpc });
+                
+                this.wallet = Wallet.fromMnemonic(mnemonic, { network, rpc });
+                //this.wallet = Wallet.fromMnemonic("wasp involve attitude matter power weekend two income nephew super way focus", { network, rpc });
                 this.setupLogs(this.wallet);
                 await this.wallet.sync(true);
-                console.log(this.wallet.balance);
+                const { balance } = this.wallet;
+                console.log('');
+                console.log(`Wallet balance`+(network=='kaspa'?'':` (${Wallet.networkTypes[network].name}):`));
+                console.log('');
+                console.log(`    Available: ${this.KSP(balance.available,12)} KSP`);
+                console.log(`      Pending: ${this.KSP(balance.pending,12)} KSP`);
+                console.log(`        Total: ${this.KSP(balance.total,12)} KSP`);
+                // console.log(this.wallet.balance);
                 rpc.disconnect();
             });
 
@@ -163,7 +184,7 @@ class KaspaWalletCli {
                 }
 
                 const { network, rpc } = this;
-                this.wallet = Wallet.fromMnemonic("wasp involve attitude matter power weekend two income nephew super way focus", { network, rpc });
+                this.wallet = Wallet.fromMnemonic(mnemonic, { network, rpc });
                 this.setupLogs(this.wallet)
                 let response = await this.wallet.submitTransaction({
                     toAddr: address,
@@ -186,7 +207,6 @@ class KaspaWalletCli {
             .command('create')
             .description('Create Kaspa wallet')
             .requiredOption('-p, --password <password>', "Password for wallet")
-            .option('-l,--loglevel <loglevel>', "log level (info|debug)")
             .action(async (cmd, options) => {
                 if(!cmd.password){
                     console.error("password is required")
