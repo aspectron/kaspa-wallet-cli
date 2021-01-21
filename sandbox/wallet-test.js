@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const { Wallet, initKaspaFramework } = require('kaspa-wallet');
+const { Wallet, initKaspaFramework } = require('kaspa-wallet-worker');
 
 const {RPC} = require('kaspa-grpc-node');
 
@@ -37,8 +37,9 @@ const run = async ()=>{
     //Wallet C
     //let wallet = Wallet.fromMnemonic("wasp involve attitude matter power weekend two income nephew super way focus", { network, rpc });
     //kaspadev:qpuyhaxz2chn3lsvf8g7q5uvaezpp5m7pygf2jzn8d
+    let mnemonic = await wallet.mnemonic;
+    dump("mnemonic created", mnemonic)
 
-    dump("mnemonic created", wallet.mnemonic)
 
     //wallet.setLogLevel('info');
 
@@ -54,7 +55,9 @@ const run = async ()=>{
     //console.log("sync........... started")
     await wallet.sync();
     //console.log("sync........... complete")
-    return
+    //return
+    let receiveAddress = await wallet.receiveAddress;
+    dump("receiveAddress", receiveAddress)
     
     let response = await wallet.submitTransaction({
         //toAddr: "kaspadev:qpfp3umjvnx40vrqtyy0drsn08942dkjhcsqh73eav", //Wallet B
@@ -64,7 +67,7 @@ const run = async ()=>{
         toAddr: "kaspadev:qpef0h00dcne5dmah0lmyzgplrn4cqh9rq3qcr8uqc", //Wallet B
         amount: 200000000
     }).catch(async (error)=>{
-        console.log("\n\nerror", error)
+        console.log("\n\nsubmitTransaction:error", error)
     })
 
     console.log("\n\nResponse", response)
