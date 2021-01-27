@@ -113,10 +113,10 @@ RPC Example
 node rpc run -m getTransactionsByAddressesRequest -j '{"addresses":["kaspatest:qr32vna4u8wdamddwaf8853gt52dsauyp59zlcwd5k"], "startingBlockHash":""}'
 ```
 
-Running Kaspad
---------------
+Running Kaspad and Mining
+-------------------------
 
 ```sh
 ./kaspad --utxoindex --testnet
-./kaspaminer --miningaddr=kaspatest:qq0nvlmn07f6edcdfynt4nu4l4r58rkquuvgt635ac --rpcserver=localhost:16210 --block-delay=5000 --mine-when-not-synced --testnet
+./kaspaminer --miningaddr=kaspatest:qq0nvlmn07f6edcdfynt4nu4l4r58rkquuvgt635ac --rpcserver=localhost:16210 --testnet
 ```
