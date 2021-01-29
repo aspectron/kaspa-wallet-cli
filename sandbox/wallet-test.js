@@ -1,15 +1,17 @@
 #!/usr/bin/env node
 
-const { Wallet, initKaspaFramework } = require('kaspa-wallet-worker');
+const { Wallet, initKaspaFramework } = require('kaspa-wallet');
+
+//Wallet.setWorkerLogLevel('none')
 
 const {RPC} = require('kaspa-grpc-node');
 
-const network = 'kaspadev';
+const network = 'kaspatest';
 
 const rpc = new RPC({
     clientConfig:{
         host:"127.0.0.1:"+Wallet.networkTypes[network].port
-        //host:"127.0.0.1:16110"
+        //host:"127.0.0.1:16210"
     }
 });
 //rpc.client.verbose = true;
@@ -31,17 +33,21 @@ const run = async ()=>{
     //kaspadev:qpkanezz2ptk439km3se7tyfxf4v7dn7nuy7ajgan4
 
     //Wallet B
-    let wallet = Wallet.fromMnemonic("live excuse stone acquire remain later core enjoy visual advice body play", { network, rpc }, {syncOnce:true, logLevel:'info'});
+    //let wallet = Wallet.fromMnemonic("live excuse stone acquire remain later core enjoy visual advice body play", { network, rpc }, {syncOnce:true, logLevel:'info'});
     //kaspadev:qpfp3umjvnx40vrqtyy0drsn08942dkjhcsqh73eav
 
     //Wallet C
     //let wallet = Wallet.fromMnemonic("wasp involve attitude matter power weekend two income nephew super way focus", { network, rpc });
     //kaspadev:qpuyhaxz2chn3lsvf8g7q5uvaezpp5m7pygf2jzn8d
+
+    let wallet = Wallet.fromMnemonic("chuckle seek trumpet parrot fuel tilt prosper gate cross truth monkey true", { network, rpc })
+    console.log("wallet.uid", wallet.uid);
+    
     let mnemonic = await wallet.mnemonic;
     dump("mnemonic created", mnemonic)
 
 
-    //wallet.setLogLevel('info');
+    wallet.setLogLevel('info,debug');
 
     wallet.on("blue-score-changed", (result)=>{
         let {blueScore} = result;
@@ -52,25 +58,28 @@ const run = async ()=>{
         console.log("balance-update:result", result)
     })
 
+    
+
     //console.log("sync........... started")
     await wallet.sync();
     //console.log("sync........... complete")
     //return
     let receiveAddress = await wallet.receiveAddress;
     dump("receiveAddress", receiveAddress)
-    
-    let response = await wallet.submitTransaction({
+    return
+    let response = await wallet.estimateTransaction({
         //toAddr: "kaspadev:qpfp3umjvnx40vrqtyy0drsn08942dkjhcsqh73eav", //Wallet B
         //toAddr: "kaspadev:qzpf5d3w7vwgfvu8zy993xupj2yewwfngg439f58nn",  //Wallet B
         //toAddr: "kaspadev:qpuyhaxz2chn3lsvf8g7q5uvaezpp5m7pygf2jzn8d", //Wallet C
         //toAddr: "kaspadev:qrhe3f7js0rusmmmzqwh7d277xfklc2h55e4my9fxz", //Wallet C
-        toAddr: "kaspadev:qpef0h00dcne5dmah0lmyzgplrn4cqh9rq3qcr8uqc", //Wallet B
-        amount: 200000000
-    }).catch(async (error)=>{
-        console.log("\n\nsubmitTransaction:error", error)
+        toAddr: "kaspatest:qr2kwyvpgx5s6avsfa9ncs95052djn4jrq882f56w9", //faucet
+        amount: 1000*1e8,
+        calculateNetworkFee:true
+    }, true).catch(async (error)=>{
+        console.log("\n\estimateTransaction:error", error)
     })
 
-    console.log("\n\nResponse", response)
+    console.log("\n\nResponse", response);//.tx.inputs.length)
 
 
     //rpc.disconnect();
