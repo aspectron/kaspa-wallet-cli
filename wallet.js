@@ -47,7 +47,7 @@ class KaspaWalletCli {
         return this.rpc_;
     }
 
-    KSP(v, pad = 0) {
+    KAS(v, pad = 0) {
 		let [int,frac] = Decimal(v||0).mul(1e-8).toFixed(8).split('.');
         int = int.replace(/\B(?=(\d{3})+(?!\d))/g, ",").padStart(pad,' ');
         frac = frac.replace(/0+$/,'');
@@ -137,9 +137,9 @@ class KaspaWalletCli {
                 console.log('');
                 console.log(`Wallet balance`+(network=='kaspa'?'':` (${Wallet.networkTypes[network].name}):`));
                 console.log('');
-                console.log(`    Available: ${this.KSP(balance.available,12)} KSP`);
-                console.log(`      Pending: ${this.KSP(balance.pending,12)} KSP`);
-                console.log(`        Total: ${this.KSP(balance.total,12)} KSP`);
+                console.log(`    Available: ${this.KAS(balance.available,12)} KAS`);
+                console.log(`      Pending: ${this.KAS(balance.pending,12)} KAS`);
+                console.log(`        Total: ${this.KAS(balance.total,12)} KAS`);
                 // console.log(this.wallet.balance);
                 rpc.disconnect();
             });
@@ -149,7 +149,7 @@ class KaspaWalletCli {
             .command('send <address> <amount> [fee]')
             .description('send funds to an address', {
                 address : 'kaspa network address',
-                amount : 'amount in KSP',
+                amount : 'amount in KAS',
                 fee : 'transaction priority fee'
             })
             .action(async (address, amount, fee) => {
