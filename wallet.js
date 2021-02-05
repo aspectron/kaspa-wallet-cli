@@ -109,19 +109,19 @@ class KaspaWalletCli {
 	}
 
 	async openWallet(next){
-		let mnemonic = await storage.getWallet();
-		if(!mnemonic){
+		let walletMeta = await storage.getWallet();
+		if(!walletMeta || !walletMeta.wallet?.mnemonic){
 			logger.error("Please create wallet")
 			return
 		}
 
-		if(mnemonic.includes(" ")){
+		if(walletMeta.encryption=='none'){
 			const { network, rpc } = this;
-			let wallet = Wallet.fromMnemonic(mnemonic, { network, rpc });
+			let wallet = Wallet.fromMnemonic(walletMeta.wallet.mnemonic, { network, rpc });
 			return next(wallet);
 		}
 
-		this.decryptWallet(mnemonic, next)
+		this.decryptWallet(walletMeta.wallet.mnemonic, next)
 	}
 
 	decryptWallet(mnemonic, next){
@@ -344,10 +344,9 @@ class KaspaWalletCli {
 
 					const wallet = new Wallet(null, null, { network });
 					this.setupLogs(wallet)
-
 					if(!password){
 						dump("mnemonic created", wallet.mnemonic)
-						storage.createWallet(wallet.mnemonic)
+						storage.createWallet(wallet.mnemonic, {encryption:"none"})
 					}else{
 						const encryptedMnemonic = await wallet.export(password);
 						dump("Encrypted Mnemonic", encryptedMnemonic)
