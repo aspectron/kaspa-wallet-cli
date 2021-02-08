@@ -261,7 +261,7 @@ class KaspaWalletCli {
 			.action(async (address, amount, fee) => {
 				// console.log({address,amount,fees});
 				try {
-					amount = new Decimal(amount);
+					amount = new Decimal(amount).mul(1e8).toNumber();
 				} catch(ex) {
 					console.log(`Error parsing amount: ${amount}`);
 					console.log(ex.toString());
@@ -269,7 +269,7 @@ class KaspaWalletCli {
 				}
 				if(fee) {
 					try {
-						fee = new Decimal(fee);
+						fee = new Decimal(fee).mul(1e8).toNumber();
 					} catch(ex) {
 						console.log(`Error parsing fees: ${fee}`);
 						console.log(ex.toString());
@@ -281,13 +281,17 @@ class KaspaWalletCli {
 				log.info(`connecting to kaspa ${Wallet.networkTypes[network].name}`);
 				this.wallet = Wallet.fromMnemonic(mnemonic, { network, rpc });
 				this.setupLogs(this.wallet)
-				let response = await this.wallet.submitTransaction({
-					toAddr: address,
-					amount,
-					fee,
-				}, true);
-
-				console.log(response);
+				try {
+					let response = await this.wallet.submitTransaction({
+						toAddr: address,
+						amount,
+						fee,
+					}, true);
+					console.log(response);
+				} catch(ex) {
+					//console.log(ex);
+					log.error(ex.toString());
+				}
 
 				rpc.disconnect();
 			});
@@ -333,9 +337,9 @@ class KaspaWalletCli {
 		program
 			.command('create')
 			.description('Create Kaspa wallet')
-			.option('-p, --password <password>', "Password for wallet, optional if creating unlocked wallet")
+			.option('--password <password>', "Password for wallet, optional if creating unlocked wallet")
 			//.option('-u, --unlocked', "Create unlocked wallet")
-			.option('-f, --force', "Required for unlocked wallet creation")
+			.option('--force', "Required for unlocked wallet creation")
 			.action(async (cmd, options) => {
 				const {password, unlocked, force} = cmd;
 
