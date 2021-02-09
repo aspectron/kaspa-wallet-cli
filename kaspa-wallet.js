@@ -5,11 +5,8 @@ const { Wallet, initKaspaFramework, log, Storage, FlowLogger} = require('kaspa-w
 const { RPC } = require('kaspa-grpc-node');
 const Decimal = require('decimal.js');
 const fs = require("fs");
-
 const ReadLine = require('readline');
 const Writable = require('stream').Writable;
-
-
 const program = new Command();
 const storage = new Storage({logLevel:'debug'});
 const logger = new FlowLogger('WALLET', {
@@ -31,7 +28,6 @@ const Prompt = ({question, muted=false, CB, errorCB=null, attempt=2})=>{
 		output: mutableStdout,
 		terminal: true
 	});
-
 
 	let count = 0;
 	let askQuestion = ()=>{
@@ -131,15 +127,15 @@ class KaspaWalletCli {
 
 				let decrypted = await this.decryptMnemonic(password, mnemonic)
 				.catch(e=>{
-					logger.error(e);
+					// logger.error(e);
 				})
 				let {privKey, seedPhrase} = decrypted||{}
 
 				if(!privKey){
-					logger.info(`Unable to decrypt wallet with "${password}" password`)
+					logger.info(`Unable to decrypt wallet - invalid password`);
 					Prompt({
 						muted:true,
-						question:"Please provide another password: ",
+						question:"Please provide password (2nd attempt): ",
 						CB: openWallet_,
 						errorCB:()=>{
 							//logger.error("Invalid password");
@@ -154,7 +150,7 @@ class KaspaWalletCli {
 				resolve(wallet);
 			}
 
-			logger.info("To unlock your wallet please provide password")
+			logger.info("To unlock your wallet please provide your password")
 			Prompt({
 				muted:true,
 				question:"please provide wallet password: ",
@@ -357,7 +353,7 @@ class KaspaWalletCli {
 
 				const next = async(password)=>{
 					let { network } = this;
-					
+
 					console.log('');
 					const wallet = new Wallet(null, null, { network });
 					this.setupLogs(wallet)
@@ -416,25 +412,7 @@ class KaspaWalletCli {
 					next(password);
 				}
 			})
-		/*
-		program
-			.command('run-grpc')
-			.description('Run gRPC "run -m <method> -j <json_data>" ')
-			.option('-m, --method <method>', "rpc request, default will be 'getBlockDagInfoRequest' ")
-			.option('-j, --json <json_data>', "rpc request args as json string, default will be '{}' ")
-			.action(async (cmd, options) => {
-				let {json_data='{}', method='getBlockDagInfoRequest'} = cmd;
-				//console.log("method, json_data:", method, json_data)
-				let args = JSON.parse(json_data)
-				console.log("method, args:", method, args)
 
-				console.log("\nCalling:", method)
-				console.log("Arguments:\n", JSON.stringify(args, null, "  "))
-				let result = await rpc.request(method, args);
-				console.log("Result:\n", JSON.stringify(result, null, "  "))
-				rpc.disconnect();
-			})
-		*/
 		program.parse(process.argv);
 	}
 }
