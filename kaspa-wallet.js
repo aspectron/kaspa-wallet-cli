@@ -143,7 +143,7 @@ class KaspaWalletCli {
 						CB: openWallet_,
 						errorCB:()=>{
 							//logger.error("Invalid password");
-							reject('Invalid password');
+							reject('invalid password');
 						}
 					})
 					return;
@@ -161,7 +161,7 @@ class KaspaWalletCli {
 				CB:openWallet_,
 				errorCB:()=>{
 					//logger.error("Invalid password");
-					reject('Invalid password');
+					reject('invalid password');
 				}
 			})
 		})
@@ -351,20 +351,24 @@ class KaspaWalletCli {
 			.option('--password <password>', "Password for wallet, optional if creating unlocked wallet")
 			//.option('-u, --unlocked', "Create unlocked wallet")
 			.option('--force', "Required for unlocked wallet creation")
+			//.option('--show-mnemonic', "Output created mnemonic to console")
 			.action(async (cmd, options) => {
 				const {password, unlocked, force} = cmd;
 
 				const next = async(password)=>{
 					let { network } = this;
-
+					
+					console.log('');
 					const wallet = new Wallet(null, null, { network });
 					this.setupLogs(wallet)
 					if(!password){
-						dump("mnemonic created", wallet.mnemonic);
+						if(this.options.verbose)
+							dump("created unsafe mnemonic (not encrypted!)", wallet.mnemonic);
 						storage.createWallet(wallet.mnemonic, {encryption:"none", generator: "cli"})
 					}else{
 						const encryptedMnemonic = await wallet.export(password);
-						dump("Encrypted Mnemonic", encryptedMnemonic);
+						if(this.options.verbose)
+							dump("creating encrypted mnemonic", encryptedMnemonic);
 						storage.createWallet(encryptedMnemonic, { generator : "cli"})
 					}
 
@@ -372,22 +376,42 @@ class KaspaWalletCli {
 					console.log('Your wallet is stored in',storage.db.walletFile.yellow);
 					console.log('Your transaction data will be stored in',storage.db.txFile.yellow);
 					console.log('YOU MUST BACKUP THIS FILE!'.red)
-					console.log('If this file is deleted, or you forget your password,');
-					console.log('...it will not be possible to recover your funds!')
+					console.log('BEWARE: If this file is deleted, or you forget your password,');
+					console.log('        ...it will not be possible to recover your funds!')
 					console.log('---')
 				}
 
-				if(!force && !password){
-					logger.warn("You can provide a password with --password=*** or use '--force' option to create a wallet that is not encrypted.")
-					logger.warn("...requesting password entry from console");
+				const createPass = (prev)=> {
 					Prompt({
 						muted:true,
-						question:"please enter a password: ",
-						CB:next,
+						question:`please ${prev?'re-enter':'enter'} your password: `,
+						CB:(pass)=>{
+							if(!pass) {
+								console.log('\n');
+								logger.error('invalid password');
+								return;
+							}
+							if(!prev)
+								return createPass(pass);
+							else
+							if(pass == prev)
+								return next(pass);
+							else {
+								console.log('\n');
+								logger.error('passwords do not match')
+								return;
+							}
+						},
 						errorCB:()=>{
-							logger.error("Invalid password");
+							logger.error("invalid password");
 						}
 					})
+				}
+
+				if(!force && !password){
+					console.log("You can provide a password with --password=*** or use '--force' option to create a wallet that is not encrypted.")
+					console.log("...requesting password entry from console");
+					createPass();
 				}else{
 					next(password);
 				}
