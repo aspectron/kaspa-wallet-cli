@@ -260,14 +260,15 @@ class KaspaWalletCli {
 
 		program
 			.command('send <address> <amount> [fee]')
-			.option('--no-network-fee','disable automatic calculation of network fees')
+			.option('--no-network-fee','disable automatic inclusion of network/data fee')
 			.description('send funds to an address', {
 				address : 'kaspa network address',
 				amount : 'amount in KAS',
 				fee : 'transaction priority fee'
 			})
-			.action(async (address, amount, fee) => {
-				// console.log({address,amount,fees});
+			.action(async (address, amount, fee, options) => {
+				const { networkFee } = options;
+
 				try {
 					amount = new Decimal(amount).mul(1e8).toNumber();
 				} catch(ex) {
@@ -295,6 +296,7 @@ class KaspaWalletCli {
 						toAddr: address,
 						amount,
 						fee,
+						calculateNetworkFee : networkFee
 					}, true);
 					console.log(response);
 				} catch(ex) {
