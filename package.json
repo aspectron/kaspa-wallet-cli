@@ -8,7 +8,8 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "bin": {
-    "kaspa-wallet": "kaspa-wallet.js"
+    "kaspa-wallet": "kaspa-wallet.js",
+    "kaspa-rpc": "kaspa-rpc.js"
   },
   "author": "ASPECTRON Inc.",
   "license": "ISC",
