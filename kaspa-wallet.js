@@ -174,10 +174,6 @@ class KaspaWalletCli {
 
 	async main() {
 
-		// temporary mnemonics used for testing
-		//const mnemonic = "live excuse stone acquire remain later core enjoy visual advice body play";
-		 // const mnemonic = "wasp involve attitude matter power weekend two income nephew super way focus";
-
 		let dump = (label, text, deco1="-", deco2="=")=>{
 			console.log(`\n${label}:\n${deco1.repeat(100)}\n${text}\n${deco2.repeat(100)}\n`)
 		}
@@ -200,7 +196,6 @@ class KaspaWalletCli {
 			.option('--rpc <address>','use custom RPC address <host:port>')
 			.option('--folder <path>','use custom folder for wallet file storage') // TODO
 			.option('--file <filename>','use custom wallet filename') // TODO
-			// .option('--help','display help for command')
 			;
 
 		// program
@@ -217,9 +212,6 @@ class KaspaWalletCli {
 
 				try {
 					const wallet = await this.openWallet();
-					//const { network, rpc } = this;
-					//log.info(`connecting to kaspa ${Wallet.networkTypes[network].name}`);
-					//this.wallet = Wallet.fromMnemonic(mnemonic, { network, rpc });
 					this.setupLogs(this.wallet);
 					await this.wallet.sync();
 					this.wallet.on("balance-update", (detail)=>{
@@ -245,10 +237,6 @@ class KaspaWalletCli {
 			.action(async (cmd, options) => {
 				try {
 					const wallet = await this.openWallet();
-					//const { network, rpc } = this;
-					//log.info(`connecting to kaspa ${Wallet.networkTypes[network].name}`);
-					//this.wallet = Wallet.fromMnemonic(mnemonic, { network, rpc });
-					//this.wallet = Wallet.fromMnemonic("wasp involve attitude matter power weekend two income nephew super way focus", { network, rpc });
 					this.setupLogs(this.wallet);
 					await this.wallet.sync(true);
 					const { balance } = this.wallet;
@@ -296,9 +284,6 @@ class KaspaWalletCli {
 
 				try {
 					const wallet = await this.openWallet();
-					//const { network, rpc } = this;
-					//log.info(`connecting to kaspa ${Wallet.networkTypes[network].name}`);
-					//this.wallet = Wallet.fromMnemonic(mnemonic, { network, rpc });
 					this.setupLogs(this.wallet)
 					try {
 						let response = await this.wallet.submitTransaction({
@@ -327,10 +312,6 @@ class KaspaWalletCli {
 
 				try {
 					const wallet = await this.openWallet();
-					//const { network, rpc } = this;
-					//log.info(`connecting to kaspa ${Wallet.networkTypes[network].name}`);
-					//this.wallet = Wallet.fromMnemonic(mnemonic, { network, rpc });
-					//this.wallet = Wallet.fromMnemonic("wasp involve attitude matter power weekend two income nephew super way focus", { network, rpc });
 					this.setupLogs(this.wallet);
 					await this.wallet.sync(true);
 					const { balance } = this.wallet;
@@ -379,20 +360,29 @@ class KaspaWalletCli {
 					const wallet = new Wallet(null, null, { network });
 					this.setupLogs(wallet)
 					if(!password){
-						dump("mnemonic created", wallet.mnemonic)
-						storage.createWallet(wallet.mnemonic, {encryption:"none"})
+						dump("mnemonic created", wallet.mnemonic);
+						storage.createWallet(wallet.mnemonic, {encryption:"none", generator: "cli"})
 					}else{
 						const encryptedMnemonic = await wallet.export(password);
-						dump("Encrypted Mnemonic", encryptedMnemonic)
-						storage.createWallet(encryptedMnemonic)
+						dump("Encrypted Mnemonic", encryptedMnemonic);
+						storage.createWallet(encryptedMnemonic, { generator : "cli"})
 					}
+
+					console.log('---')
+					console.log('Your wallet is stored in',storage.db.walletFile.yellow);
+					console.log('Your transaction data will be stored in',storage.db.txFile.yellow);
+					console.log('YOU MUST BACKUP THIS FILE!'.red)
+					console.log('If this file is deleted, or you forget your password,');
+					console.log('...it will not be possible to recover your funds!')
+					console.log('---')
 				}
 
 				if(!force && !password){
-					logger.error("please provide a password with --password=*** or --force to create a wallet that is not encrypted.")
+					logger.warn("You can provide a password with --password=*** or use '--force' option to create a wallet that is not encrypted.")
+					logger.warn("...requesting password entry from console");
 					Prompt({
 						muted:true,
-						question:"please provide a password ",
+						question:"please enter a password: ",
 						CB:next,
 						errorCB:()=>{
 							logger.error("Invalid password");
