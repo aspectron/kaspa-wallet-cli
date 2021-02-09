@@ -24,6 +24,7 @@
     "decimal.js": "^10.2.1",
     "kaspa-grpc": "aspectron/kaspa-grpc",
     "kaspa-grpc-node": "aspectron/kaspa-grpc-node",
-    "kaspa-wallet": "aspectron/kaspa-wallet"
+    "kaspa-wallet": "aspectron/kaspa-wallet",
+    "progress": "^2.0.3"
   }
 }

@@ -168,6 +168,8 @@ class KaspaWalletCli {
 		return JSON.parse(decrypted)
 	}
 
+
+
 	async main() {
 
 		let dump = (label, text, deco1="-", deco2="=")=>{
@@ -194,12 +196,13 @@ class KaspaWalletCli {
 			.option('--file <filename>','use custom wallet filename') // TODO
 			;
 
-		// program
-		//     .command('test')
-		//     .description('internal testing')
-		//     .action(async (cmd, options) => {
-		//         console.log('current network:',this.network);
-		//     });
+		program
+		    .command('test')
+		    .description('internal testing')
+		    .action(async (cmd, options) => {
+				this.waitForSync();
+		        console.log('current network:',this.network);
+		    });
 
 		program
 			.command('monitor')
@@ -208,16 +211,37 @@ class KaspaWalletCli {
 
 				try {
 					const wallet = await this.openWallet();
-					this.setupLogs(this.wallet);
-					await this.wallet.sync();
-					this.wallet.on("balance-update", (detail)=>{
-						const { balance, available, pending } = detail;
-						console.log(`Balance Update:`, detail);
+					this.setupLogs(wallet);
+					await wallet.sync();
+					wallet.on("balance-update", (detail)=>{
+						const { total, available, pending } = detail;
+						console.log(`Balance Update: available:`,available, `pending:`,pending, `total:`,total);
+						console.log(``);
 					})
 
 					let seq = 0;
-					this.wallet.on("utxo-change", (detail)=>{
-						console.log(`UTXO Change:`,'added:', detail.added.entries(), 'removed:', detail.removed.entries());
+					wallet.on("utxo-change", (detail)=>{
+						//console.log(`UTXO Change:`,'added:', detail.added.entries(), 'removed:', detail.removed.entries());
+						detail.added.forEach((v, k)=>{
+							console.log("UTXO Change added");
+							console.log("  address:",k.green);
+							v.forEach(entry=>{
+								console.log("  transactionId:", `${entry.transactionId} #${entry.index}`.green);
+								console.log("  scriptPublicKey:", entry.scriptPublicKey.scriptPublicKey, "version:", entry.scriptPublicKey.version);
+								console.log("  blockBlueScore:", entry.blockBlueScore.cyan,"isCoinbase:", entry.isCoinbase);
+								console.log("  amount:", entry.amount);
+								console.log(``);
+							})	
+						})
+
+						detail.removed.forEach((v, k)=>{
+							console.log("UTXO Change removed".magenta);
+							console.log("  address:",k.green);
+							v.forEach(entry=>{
+								console.log("  transactionId:", `${entry.transactionId} #${entry.index}`.green);
+							})	
+							console.log(``);
+						})
 						// let {added,removed} = detail;
 						// added = [...added.values()].flat();
 						// removed = [...removed.values()].flat();
@@ -233,17 +257,18 @@ class KaspaWalletCli {
 			.action(async (cmd, options) => {
 				try {
 					const wallet = await this.openWallet();
-					this.setupLogs(this.wallet);
-					await this.wallet.sync(true);
-					const { balance } = this.wallet;
+					this.setupLogs(wallet);
+					await wallet.sync(true);
+					const { balance } = wallet;
+					let { network } = this;
 					console.log('');
 					console.log(`Wallet balance`+(network=='kaspa'?'':` (${Wallet.networkTypes[network].name}):`));
 					console.log('');
 					console.log(`    Available: ${this.KAS(balance.available,12)} KAS`);
 					console.log(`      Pending: ${this.KAS(balance.pending,12)} KAS`);
 					console.log(`        Total: ${this.KAS(balance.total,12)} KAS`);
-					// console.log(this.wallet.balance);
-					rpc.disconnect();
+					// console.log(wallet.balance);
+					this.rpc.disconnect();
 				} catch(ex) {
 					logger.error(ex.toString());
 				}
@@ -280,21 +305,28 @@ class KaspaWalletCli {
 
 				try {
 					const wallet = await this.openWallet();
-					this.setupLogs(this.wallet)
+					this.setupLogs(wallet)
 					try {
-						let response = await this.wallet.submitTransaction({
+						let response = await wallet.submitTransaction({
 							toAddr: address,
 							amount,
 							fee,
 							calculateNetworkFee : networkFee
 						}, true);
-						console.log(response);
+						console.log('');
+						console.log("Transaction successful".green);
+						console.log('');
+						console.log(`Wallet balance`+(this.network=='kaspa'?'':` (${Wallet.networkTypes[this.network].name}):`));
+						console.log('');
+						console.log(`    Available: ${this.KAS(wallet.balance.available,12)} KAS`);
+						console.log(`      Pending: ${this.KAS(wallet.balance.pending,12)} KAS`);
+						console.log(`        Total: ${this.KAS(wallet.balance.total,12)} KAS`);
 					} catch(ex) {
 						//console.log(ex);
-						log.error(ex.toString());
+						logger.error(ex.toString());
 					}
 
-					rpc.disconnect();
+					this.rpc.disconnect();
 				} catch(ex) {
 					logger.error(ex.toString());
 				}
@@ -308,15 +340,24 @@ class KaspaWalletCli {
 
 				try {
 					const wallet = await this.openWallet();
-					this.setupLogs(this.wallet);
-					await this.wallet.sync(true);
-					const { balance } = this.wallet;
-
-					//console.log(this.wallet);
-					//console.log(this.wallet.utxoSet);
-					//console.log(this.wallet.addressManager);
-
-					rpc.disconnect();
+					this.setupLogs(wallet);
+					await wallet.sync(true);
+					const { balance } = wallet;
+					//console.log(wallet);
+					console.log("");
+					console.log("current network blue score:", wallet.blueScore.cyan);
+					console.log("network:", wallet.network);
+					console.log("current address:", wallet.addressManager.receiveAddress.current.address.green);
+					console.log(`balance available:`, this.KAS(wallet.balance.available).green, `KAS`.green,
+					` pending:`, this.KAS(wallet.balance.pending).green, `KAS`.green, 
+					` total:`, this.KAS(wallet.balance.total).green, `KAS`.green);
+					console.log("receive addresses used:",wallet.addressManager.receiveAddress.counter);
+					console.log("change addresses used: ",wallet.addressManager.changeAddress.counter);
+					console.log("UTXO storage: ");
+					Object.entries(wallet.utxoSet.utxoStorage).forEach(([k, v])=>{
+						console.log("  address:",k.green, " UTXOs:",v.length);
+					})
+					this.rpc.disconnect();
 				} catch(ex) {
 					logger.error(ex.toString());
 				}
@@ -331,10 +372,9 @@ class KaspaWalletCli {
 				try {
 					const wallet = await this.openWallet();
 					console.log('getting address for', this.network);
-					this.wallet = wallet;
-					this.setupLogs(this.wallet);
-					await this.wallet.sync(true);
-					logger.info(this.wallet.receiveAddress);
+					this.setupLogs(wallet);
+					await wallet.sync(true);
+					logger.info(wallet.receiveAddress);
 					this.rpc.disconnect();
 				} catch(ex) {
 					logger.error(ex.toString());
@@ -415,7 +455,45 @@ class KaspaWalletCli {
 
 		program.parse(process.argv);
 	}
+
+	// getBlockDagInfo(){
+	// 	return new Promise((resolve, reject)=>{
+	// 		this.rpc.call()
+	// 	})
+	// }
+
+	waitForSync(){
+		return new Promise(async (resolve, reject)=>{
+			let ok = false;
+			while(!ok){
+				await this.rpc.connect();
+				let bdi = await this.rpc.client.call('getBlockDagInfoRequest');
+				//let vspbs = await this.rpc.client.call('getVirtualSelectedParentBlueScore');
+				const pastMedianTime = parseInt(bdi.pastMedianTime);
+				const blockCount = parseInt(bdi.blockCount);
+				const headerCount = parseInt(bdi.headerCount);
+				//const blueScore = parseInt(vspbs.blueScore);
+				if(blockCount == 1){
+					this.syncStatus = "syncing headers...";
+				}else if(!this.syncStartTime){
+					this.syncStartTime = bdi.pastMedianTime;	
+				}else{
+					const ts_ = new Date();
+					const ts = ts_.getTime();
+					const total = ts - this.syncStartTime;
+					const range = pastMedianTime - this.syncStartTime;
+					const delta = range / total;
+					const syncStatus = delta*100;
+					const syncValue = (syncStatus).toFixed(3)+' %';
+					console.log("Sync Value:", syncValue, "Sync Status: ", syncStatus, "Block Count:", blockCount, "Header Count:", headerCount);
+
+				}
+			}
+		})
+	}
 }
+
+
 
 (async()=>{
 	const cli = new KaspaWalletCli();
