@@ -5,7 +5,14 @@ Kaspa Wallet command-line interface build on top of [Kaspa Wallet](https://githu
 
 This command-line wallet is compatible with [KDX](https://kdx.app)
 
-**PLEASE NOTE: This project is under heavy development**
+
+Installing Kaspa Wallet
+-----------------------
+
+```
+npm install -g aspectron/kaspa-wallet-cli
+kaspa-wallet
+```
 
 Cloning Kaspa Wallet
 --------------------
@@ -14,37 +21,39 @@ Cloning Kaspa Wallet
 git clone git@github.com:aspectron/kaspa-wallet-cli
 cd kaspa-wallet-cli
 npm install
+node kaspa-wallet
 ```
 
 Running Kaspa Wallet
 --------------------
 
 ```
-$ node wallet
-Usage: wallet [options] [command]
+$ node kaspa-wallet
+Usage: kaspa-wallet [options] [command]
 
 Kaspa Wallet client
 
 Options:
-  --version                      output the version number
-  --log <level>                  set log level error, warn, info, verbose, debug
-  --verbose                      log wallet activity
-  --debug                        debug wallet activity
-  --testnet                      use testnet network
-  --devnet                       use devnet network
-  --simnet                       use simnet network
-  --rpc <address>                use custom RPC address <host:port>
-  --folder <path>                use custom folder for wallet file storage
-  --file <filename>              use custom wallet filename
-  --help                         display help for command
+  --version                                output the version number
+  --log <level>                            set log level error, warn, info, verbose, debug
+  --verbose                                log wallet activity
+  --debug                                  debug wallet activity
+  --testnet                                use testnet network
+  --devnet                                 use devnet network
+  --simnet                                 use simnet network
+  --rpc <address>                          use custom RPC address <host:port>
+  --folder <path>                          use custom folder for wallet file storage
+  --file <filename>                        use custom wallet filename
+  --help                                   display help for command
 
 Commands:
-  monitor                        monitor wallet activity
-  balance                        display wallet balance
-  send <address> <amount> [fee]  send funds to an address
-  create [options]               Create Kaspa wallet
-  help [command]                 display help for command
-
+  monitor                                  monitor wallet activity
+  balance                                  display wallet balance
+  send [options] <address> <amount> [fee]  send funds to an address
+  info                                     internal wallet information
+  address                                  show wallet address
+  create [options]                         create Kaspa wallet
+  help [command]                           display help for command
 ```
 
 

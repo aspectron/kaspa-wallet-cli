@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#! /usr/bin/env node
 
 const { Command } = require('commander');
 const { Wallet, initKaspaFramework, log, Storage, FlowLogger} = require('kaspa-wallet');
@@ -108,57 +108,62 @@ class KaspaWalletCli {
 		log.level = level;
 	}
 
-	async openWallet(next){
-		let walletMeta = await storage.getWallet();
-		if(!walletMeta || !walletMeta.wallet?.mnemonic){
-			logger.error("Please create wallet")
-			return
-		}
+	openWallet() {
+		return new Promise(async (resolve, reject) => {
+			let walletMeta = await storage.getWallet();
+			if(!walletMeta || !walletMeta.wallet?.mnemonic){
+				return reject("Please create wallet")
+			}
 
-		if(walletMeta.encryption=='none'){
-			const { network, rpc } = this;
-			let wallet = Wallet.fromMnemonic(walletMeta.wallet.mnemonic, { network, rpc });
-			return next(wallet);
-		}
+			if(walletMeta.encryption=='none'){
+				const { network, rpc } = this;
+				let wallet = Wallet.fromMnemonic(walletMeta.wallet.mnemonic, { network, rpc });
+				return resolve(wallet);
+			}
 
-		this.decryptWallet(walletMeta.wallet.mnemonic, next)
+			this.decryptWallet(walletMeta.wallet.mnemonic).then(resolve, reject);
+		})
 	}
 
-	decryptWallet(mnemonic, next){
-		let openWallet = async(password)=>{
-			
-			let decrypted = await this.decryptMnemonic(password, mnemonic)
-			.catch(e=>{
+	decryptWallet(mnemonic){
+		return new Promise(async (resolve,reject) => {
+			const openWallet_ = async(password)=>{
 
-			})
-			let {privKey, seedPhrase} = decrypted||{}
-			
-			if(!privKey){
-				logger.info(`Unable to decrypt wallet with "${password}" password`)
-				Prompt({
-					muted:true,
-					question:"Please provide another password: ",
-					CB: openWallet,
-					errorCB:()=>{
-						logger.error("Invalid password");
-					}
+				let decrypted = await this.decryptMnemonic(password, mnemonic)
+				.catch(e=>{
+					logger.error(e);
 				})
-				return
+				let {privKey, seedPhrase} = decrypted||{}
+
+				if(!privKey){
+					logger.info(`Unable to decrypt wallet with "${password}" password`)
+					Prompt({
+						muted:true,
+						question:"Please provide another password: ",
+						CB: openWallet_,
+						errorCB:()=>{
+							//logger.error("Invalid password");
+							reject('Invalid password');
+						}
+					})
+					return;
+				}
+
+				const {network, rpc} = this;
+				let wallet = new Wallet(privKey, seedPhrase, { network, rpc })
+				resolve(wallet);
 			}
 
-			const {network, rpc} = this;
-			let wallet = new Wallet(privKey, seedPhrase, { network, rpc })
-			next(wallet)
-		}
-
-		logger.info("To unlock your wallet please provide password")
-		Prompt({
-			muted:true,
-			question:"please provide wallet password: ",
-			CB:openWallet,
-			errorCB:()=>{
-				logger.error("Invalid password");
-			}
+			logger.info("To unlock your wallet please provide password")
+			Prompt({
+				muted:true,
+				question:"please provide wallet password: ",
+				CB:openWallet_,
+				errorCB:()=>{
+					//logger.error("Invalid password");
+					reject('Invalid password');
+				}
+			})
 		})
 	}
 	async decryptMnemonic(password, encryptedMnemonic){
@@ -171,7 +176,7 @@ class KaspaWalletCli {
 
 		// temporary mnemonics used for testing
 		//const mnemonic = "live excuse stone acquire remain later core enjoy visual advice body play";
-		 const mnemonic = "wasp involve attitude matter power weekend two income nephew super way focus";
+		 // const mnemonic = "wasp involve attitude matter power weekend two income nephew super way focus";
 
 		let dump = (label, text, deco1="-", deco2="=")=>{
 			console.log(`\n${label}:\n${deco1.repeat(100)}\n${text}\n${deco2.repeat(100)}\n`)
@@ -209,9 +214,11 @@ class KaspaWalletCli {
 			.command('monitor')
 			.description('monitor wallet activity')
 			.action(async (cmd, options) => {
-				const { network, rpc } = this;
-				log.info(`connecting to kaspa ${Wallet.networkTypes[network].name}`);
-				this.wallet = Wallet.fromMnemonic(mnemonic, { network, rpc });
+
+				const wallet = await this.openWallet();
+				//const { network, rpc } = this;
+				//log.info(`connecting to kaspa ${Wallet.networkTypes[network].name}`);
+				//this.wallet = Wallet.fromMnemonic(mnemonic, { network, rpc });
 				this.setupLogs(this.wallet);
 				await this.wallet.sync();
 				this.wallet.on("balance-update", (detail)=>{
@@ -225,17 +232,17 @@ class KaspaWalletCli {
 					// let {added,removed} = detail;
 					// added = [...added.values()].flat();
 					// removed = [...removed.values()].flat();
-				})
-   
+				});
 			});
 
 		program
 			.command('balance')
 			.description('display wallet balance')
 			.action(async (cmd, options) => {
-				const { network, rpc } = this;
-				log.info(`connecting to kaspa ${Wallet.networkTypes[network].name}`);
-				this.wallet = Wallet.fromMnemonic(mnemonic, { network, rpc });
+				const wallet = await this.openWallet();
+				//const { network, rpc } = this;
+				//log.info(`connecting to kaspa ${Wallet.networkTypes[network].name}`);
+				//this.wallet = Wallet.fromMnemonic(mnemonic, { network, rpc });
 				//this.wallet = Wallet.fromMnemonic("wasp involve attitude matter power weekend two income nephew super way focus", { network, rpc });
 				this.setupLogs(this.wallet);
 				await this.wallet.sync(true);
@@ -253,6 +260,7 @@ class KaspaWalletCli {
 
 		program
 			.command('send <address> <amount> [fee]')
+			.option('--no-network-fee','disable automatic calculation of network fees')
 			.description('send funds to an address', {
 				address : 'kaspa network address',
 				amount : 'amount in KAS',
@@ -277,9 +285,10 @@ class KaspaWalletCli {
 					}
 				}
 
-				const { network, rpc } = this;
-				log.info(`connecting to kaspa ${Wallet.networkTypes[network].name}`);
-				this.wallet = Wallet.fromMnemonic(mnemonic, { network, rpc });
+				const wallet = await this.openWallet();
+				//const { network, rpc } = this;
+				//log.info(`connecting to kaspa ${Wallet.networkTypes[network].name}`);
+				//this.wallet = Wallet.fromMnemonic(mnemonic, { network, rpc });
 				this.setupLogs(this.wallet)
 				try {
 					let response = await this.wallet.submitTransaction({
@@ -301,42 +310,39 @@ class KaspaWalletCli {
 			.description('internal wallet information')
 			.action(async (cmd, options) => {
 
-				const { network, rpc } = this;
-				log.info(`connecting to kaspa ${Wallet.networkTypes[network].name}`);
-				this.wallet = Wallet.fromMnemonic(mnemonic, { network, rpc });
+				const wallet = await this.openWallet();
+				//const { network, rpc } = this;
+				//log.info(`connecting to kaspa ${Wallet.networkTypes[network].name}`);
+				//this.wallet = Wallet.fromMnemonic(mnemonic, { network, rpc });
 				//this.wallet = Wallet.fromMnemonic("wasp involve attitude matter power weekend two income nephew super way focus", { network, rpc });
 				this.setupLogs(this.wallet);
 				await this.wallet.sync(true);
 				const { balance } = this.wallet;
 
-				console.log(this.wallet);
-				// console.log(this.wallet.utxoSet);
-				console.log(this.wallet.addressManager);
+				//console.log(this.wallet);
+				//console.log(this.wallet.utxoSet);
+				//console.log(this.wallet.addressManager);
 
 				rpc.disconnect();
-			})
+			});
 
 		program
 			.command('address')
-			.description('Show wallet address')
+			.description('show wallet address')
 			.action(async(cmd, options) => {
 
-				let next = async(wallet)=>{
-					console.log('getting address for', this.network);
-					this.wallet = wallet;
-					this.setupLogs(this.wallet);
-					await this.wallet.sync(true);
-					logger.info(this.wallet.receiveAddress);
-					this.rpc.disconnect();
-				}
-
-				
-				this.openWallet(next);
+				const wallet = await this.openWallet();
+				console.log('getting address for', this.network);
+				this.wallet = wallet;
+				this.setupLogs(this.wallet);
+				await this.wallet.sync(true);
+				logger.info(this.wallet.receiveAddress);
+				this.rpc.disconnect();
 			})
 
 		program
 			.command('create')
-			.description('Create Kaspa wallet')
+			.description('create Kaspa wallet')
 			.option('--password <password>', "Password for wallet, optional if creating unlocked wallet")
 			//.option('-u, --unlocked', "Create unlocked wallet")
 			.option('--force', "Required for unlocked wallet creation")
