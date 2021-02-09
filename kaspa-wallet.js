@@ -215,46 +215,54 @@ class KaspaWalletCli {
 			.description('monitor wallet activity')
 			.action(async (cmd, options) => {
 
-				const wallet = await this.openWallet();
-				//const { network, rpc } = this;
-				//log.info(`connecting to kaspa ${Wallet.networkTypes[network].name}`);
-				//this.wallet = Wallet.fromMnemonic(mnemonic, { network, rpc });
-				this.setupLogs(this.wallet);
-				await this.wallet.sync();
-				this.wallet.on("balance-update", (detail)=>{
-					const { balance, available, pending } = detail;
-					console.log(`Balance Update:`, detail);
-				})
+				try {
+					const wallet = await this.openWallet();
+					//const { network, rpc } = this;
+					//log.info(`connecting to kaspa ${Wallet.networkTypes[network].name}`);
+					//this.wallet = Wallet.fromMnemonic(mnemonic, { network, rpc });
+					this.setupLogs(this.wallet);
+					await this.wallet.sync();
+					this.wallet.on("balance-update", (detail)=>{
+						const { balance, available, pending } = detail;
+						console.log(`Balance Update:`, detail);
+					})
 
-				let seq = 0;
-				this.wallet.on("utxo-change", (detail)=>{
-					console.log(`UTXO Change:`,'added:', detail.added.entries(), 'removed:', detail.removed.entries());
-					// let {added,removed} = detail;
-					// added = [...added.values()].flat();
-					// removed = [...removed.values()].flat();
-				});
+					let seq = 0;
+					this.wallet.on("utxo-change", (detail)=>{
+						console.log(`UTXO Change:`,'added:', detail.added.entries(), 'removed:', detail.removed.entries());
+						// let {added,removed} = detail;
+						// added = [...added.values()].flat();
+						// removed = [...removed.values()].flat();
+					});
+				} catch(ex) {
+					logger.error(ex.toString());
+				}
 			});
 
 		program
 			.command('balance')
 			.description('display wallet balance')
 			.action(async (cmd, options) => {
-				const wallet = await this.openWallet();
-				//const { network, rpc } = this;
-				//log.info(`connecting to kaspa ${Wallet.networkTypes[network].name}`);
-				//this.wallet = Wallet.fromMnemonic(mnemonic, { network, rpc });
-				//this.wallet = Wallet.fromMnemonic("wasp involve attitude matter power weekend two income nephew super way focus", { network, rpc });
-				this.setupLogs(this.wallet);
-				await this.wallet.sync(true);
-				const { balance } = this.wallet;
-				console.log('');
-				console.log(`Wallet balance`+(network=='kaspa'?'':` (${Wallet.networkTypes[network].name}):`));
-				console.log('');
-				console.log(`    Available: ${this.KAS(balance.available,12)} KAS`);
-				console.log(`      Pending: ${this.KAS(balance.pending,12)} KAS`);
-				console.log(`        Total: ${this.KAS(balance.total,12)} KAS`);
-				// console.log(this.wallet.balance);
-				rpc.disconnect();
+				try {
+					const wallet = await this.openWallet();
+					//const { network, rpc } = this;
+					//log.info(`connecting to kaspa ${Wallet.networkTypes[network].name}`);
+					//this.wallet = Wallet.fromMnemonic(mnemonic, { network, rpc });
+					//this.wallet = Wallet.fromMnemonic("wasp involve attitude matter power weekend two income nephew super way focus", { network, rpc });
+					this.setupLogs(this.wallet);
+					await this.wallet.sync(true);
+					const { balance } = this.wallet;
+					console.log('');
+					console.log(`Wallet balance`+(network=='kaspa'?'':` (${Wallet.networkTypes[network].name}):`));
+					console.log('');
+					console.log(`    Available: ${this.KAS(balance.available,12)} KAS`);
+					console.log(`      Pending: ${this.KAS(balance.pending,12)} KAS`);
+					console.log(`        Total: ${this.KAS(balance.total,12)} KAS`);
+					// console.log(this.wallet.balance);
+					rpc.disconnect();
+				} catch(ex) {
+					logger.error(ex.toString());
+				}
 			});
 
 
@@ -286,25 +294,30 @@ class KaspaWalletCli {
 					}
 				}
 
-				const wallet = await this.openWallet();
-				//const { network, rpc } = this;
-				//log.info(`connecting to kaspa ${Wallet.networkTypes[network].name}`);
-				//this.wallet = Wallet.fromMnemonic(mnemonic, { network, rpc });
-				this.setupLogs(this.wallet)
 				try {
-					let response = await this.wallet.submitTransaction({
-						toAddr: address,
-						amount,
-						fee,
-						calculateNetworkFee : networkFee
-					}, true);
-					console.log(response);
+					const wallet = await this.openWallet();
+					//const { network, rpc } = this;
+					//log.info(`connecting to kaspa ${Wallet.networkTypes[network].name}`);
+					//this.wallet = Wallet.fromMnemonic(mnemonic, { network, rpc });
+					this.setupLogs(this.wallet)
+					try {
+						let response = await this.wallet.submitTransaction({
+							toAddr: address,
+							amount,
+							fee,
+							calculateNetworkFee : networkFee
+						}, true);
+						console.log(response);
+					} catch(ex) {
+						//console.log(ex);
+						log.error(ex.toString());
+					}
+
+					rpc.disconnect();
 				} catch(ex) {
-					//console.log(ex);
-					log.error(ex.toString());
+					logger.error(ex.toString());
 				}
 
-				rpc.disconnect();
 			});
 
 		program
@@ -312,20 +325,25 @@ class KaspaWalletCli {
 			.description('internal wallet information')
 			.action(async (cmd, options) => {
 
-				const wallet = await this.openWallet();
-				//const { network, rpc } = this;
-				//log.info(`connecting to kaspa ${Wallet.networkTypes[network].name}`);
-				//this.wallet = Wallet.fromMnemonic(mnemonic, { network, rpc });
-				//this.wallet = Wallet.fromMnemonic("wasp involve attitude matter power weekend two income nephew super way focus", { network, rpc });
-				this.setupLogs(this.wallet);
-				await this.wallet.sync(true);
-				const { balance } = this.wallet;
+				try {
+					const wallet = await this.openWallet();
+					//const { network, rpc } = this;
+					//log.info(`connecting to kaspa ${Wallet.networkTypes[network].name}`);
+					//this.wallet = Wallet.fromMnemonic(mnemonic, { network, rpc });
+					//this.wallet = Wallet.fromMnemonic("wasp involve attitude matter power weekend two income nephew super way focus", { network, rpc });
+					this.setupLogs(this.wallet);
+					await this.wallet.sync(true);
+					const { balance } = this.wallet;
 
-				//console.log(this.wallet);
-				//console.log(this.wallet.utxoSet);
-				//console.log(this.wallet.addressManager);
+					//console.log(this.wallet);
+					//console.log(this.wallet.utxoSet);
+					//console.log(this.wallet.addressManager);
 
-				rpc.disconnect();
+					rpc.disconnect();
+				} catch(ex) {
+					logger.error(ex.toString());
+				}
+
 			});
 
 		program
@@ -333,13 +351,17 @@ class KaspaWalletCli {
 			.description('show wallet address')
 			.action(async(cmd, options) => {
 
-				const wallet = await this.openWallet();
-				console.log('getting address for', this.network);
-				this.wallet = wallet;
-				this.setupLogs(this.wallet);
-				await this.wallet.sync(true);
-				logger.info(this.wallet.receiveAddress);
-				this.rpc.disconnect();
+				try {
+					const wallet = await this.openWallet();
+					console.log('getting address for', this.network);
+					this.wallet = wallet;
+					this.setupLogs(this.wallet);
+					await this.wallet.sync(true);
+					logger.info(this.wallet.receiveAddress);
+					this.rpc.disconnect();
+				} catch(ex) {
+					logger.error(ex.toString());
+				}
 			})
 
 		program
