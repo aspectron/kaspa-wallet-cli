@@ -14,17 +14,18 @@
   "author": "ASPECTRON Inc.",
   "license": "ISC",
   "dependencies": {
+    "@aspectron/flow-async": "^1.0.0",
     "@grpc/grpc-js": "*",
     "@grpc/proto-loader": "*",
     "@types/request": "^2.48.5",
     "bitcore-lib-cash": "^8.23.1",
     "blake2": "^4.0.2",
     "blake2b-wasm": "^2.1.0",
+    "cli-progress": "^3.9.0",
     "commander": "^6.2.0",
     "decimal.js": "^10.2.1",
     "kaspa-grpc": "aspectron/kaspa-grpc",
     "kaspa-grpc-node": "aspectron/kaspa-grpc-node",
-    "kaspa-wallet": "aspectron/kaspa-wallet",
-    "progress": "^2.0.3"
+    "kaspa-wallet": "aspectron/kaspa-wallet"
   }
 }

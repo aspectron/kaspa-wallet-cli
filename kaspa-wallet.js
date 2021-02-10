@@ -1,8 +1,10 @@
 #! /usr/bin/env node
 
+const cliProgress = require('cli-progress');
 const { Command } = require('commander');
 const { Wallet, initKaspaFramework, log, Storage, FlowLogger} = require('kaspa-wallet');
 const { RPC } = require('kaspa-grpc-node');
+const { delay } = require('@aspectron/flow-async');
 const Decimal = require('decimal.js');
 const fs = require("fs");
 const ReadLine = require('readline');
@@ -89,6 +91,8 @@ class KaspaWalletCli {
 		//    this.rpc_.client.verbose = true;
 		return this.rpc_;
 	}
+
+	get rpcIsActive() { return !!this.rpc_; }
 
 	KAS(v, pad = 0) {
 		let [int,frac] = Decimal(v||0).mul(1e-8).toFixed(8).split('.');
@@ -181,6 +185,7 @@ class KaspaWalletCli {
 			.version('0.0.1', '--version')
 			.description('Kaspa Wallet client')
 			.helpOption('--help','display help for command')
+			.option('--no-sync','disable network sync for all operations')
 			.option('--log <level>',`set log level ${logLevels.join(', ')}`, (level)=>{
 				if(!logLevels.includes(level))
 					throw new Error(`Log level must be one of: ${logLevels.join(', ')}`);
@@ -197,11 +202,18 @@ class KaspaWalletCli {
 			;
 
 		program
-		    .command('test')
-		    .description('internal testing')
+		    .command('sync')
+		    .description('sync wallet with the network')
 		    .action(async (cmd, options) => {
-				this.waitForSync();
-		        console.log('current network:',this.network);
+
+				if(!this.options.sync) {
+					logger.error('you can not use --no-sync flag when running network sync');
+					return;
+				}
+				await this.networkSync();
+				if(this.rpcIsActive)
+					this.rpc.disconnect();
+		        // console.log('current network:',this.network);
 		    });
 
 		program
@@ -211,6 +223,7 @@ class KaspaWalletCli {
 
 				try {
 					const wallet = await this.openWallet();
+					await this.networkSync();
 					this.setupLogs(wallet);
 					await wallet.sync();
 					wallet.on("balance-update", (detail)=>{
@@ -257,6 +270,7 @@ class KaspaWalletCli {
 			.action(async (cmd, options) => {
 				try {
 					const wallet = await this.openWallet();
+					await this.networkSync();
 					this.setupLogs(wallet);
 					await wallet.sync(true);
 					const { balance } = wallet;
@@ -305,6 +319,7 @@ class KaspaWalletCli {
 
 				try {
 					const wallet = await this.openWallet();
+					await this.networkSync();
 					this.setupLogs(wallet)
 					try {
 						let response = await wallet.submitTransaction({
@@ -339,7 +354,9 @@ class KaspaWalletCli {
 			.action(async (cmd, options) => {
 
 				try {
+
 					const wallet = await this.openWallet();
+					await this.networkSync();
 					this.setupLogs(wallet);
 					await wallet.sync(true);
 					const { balance } = wallet;
@@ -456,39 +473,113 @@ class KaspaWalletCli {
 		program.parse(process.argv);
 	}
 
-	// getBlockDagInfo(){
-	// 	return new Promise((resolve, reject)=>{
-	// 		this.rpc.call()
-	// 	})
-	// }
+	networkSync(){
 
-	waitForSync(){
+		if(this.options.sync === false)
+			return Promise.resolve();
+
 		return new Promise(async (resolve, reject)=>{
-			let ok = false;
-			while(!ok){
-				await this.rpc.connect();
+
+			const barsize = 65;
+			const hideCursor = true;
+			const clearOnComplete = true;
+
+			const headerSpan = 5000;
+
+			let progress = null;
+
+			const syncHeaders = () => {
+				if(progress)
+					progress.stop();
+				progress = new cliProgress.SingleBar({
+					format: 'DAG sync - headers [{bar}] {headerCount}',
+					hideCursor, clearOnComplete, barsize
+				}, cliProgress.Presets.rect);
+				progress.start(headerSpan, 0);
+			}
+
+			const syncBlocks = () => {
+				if(progress)
+					progress.stop();
+				progress = new cliProgress.SingleBar({
+					format: 'DAG sync - blocks [{bar}] {percentage}% | ETA: {eta}s',
+					hideCursor, clearOnComplete, barsize
+				}, cliProgress.Presets.rect);
+				progress.start(100, 0);
+			}
+
+			const medianOffset = 45*1000; // allow 45 sec behind median
+			const medianShift = Math.ceil(263*0.5*1000+medianOffset);
+			let sync = 'init';
+			let firstBlockCount;
+			let firstHeaderCount;
+			let firstMedianTime;
+
+			let ready = false;
+			while(!ready){
 				let bdi = await this.rpc.client.call('getBlockDagInfoRequest');
-				//let vspbs = await this.rpc.client.call('getVirtualSelectedParentBlueScore');
-				const pastMedianTime = parseInt(bdi.pastMedianTime);
+				const pastMedianTime = parseInt(bdi.pastMedianTime);// + (75*1000);
 				const blockCount = parseInt(bdi.blockCount);
 				const headerCount = parseInt(bdi.headerCount);
-				//const blueScore = parseInt(vspbs.blueScore);
-				if(blockCount == 1){
-					this.syncStatus = "syncing headers...";
-				}else if(!this.syncStartTime){
-					this.syncStartTime = bdi.pastMedianTime;	
-				}else{
-					const ts_ = new Date();
-					const ts = ts_.getTime();
-					const total = ts - this.syncStartTime;
-					const range = pastMedianTime - this.syncStartTime;
-					const delta = range / total;
-					const syncStatus = delta*100;
-					const syncValue = (syncStatus).toFixed(3)+' %';
-					console.log("Sync Value:", syncValue, "Sync Status: ", syncStatus, "Block Count:", blockCount, "Header Count:", headerCount);
 
+				switch(sync) {
+					case 'init': {
+						firstBlockCount = blockCount;
+						firstHeaderCount = headerCount;
+						sync = 'wait';
+					} break;
+
+					case 'wait': {
+						if(firstBlockCount != blockCount) {
+							sync = 'blocks';
+							syncBlocks();
+							firstMedianTime = pastMedianTime;
+							continue;
+						}
+						else
+						if(firstHeaderCount != headerCount) {
+							sync = 'headers';
+							syncHeaders();
+							continue;
+						}
+					} break;
+
+					case 'headers': {
+						progress.update(headerCount % headerSpan, { headerCount, blockCount });
+						if(firstBlockCount != blockCount) {
+							sync = 'blocks';
+							syncBlocks();
+							firstMedianTime = pastMedianTime;
+							continue;
+						}
+
+					} break;
+
+					case 'blocks': {
+						const ts = (new Date()).getTime();
+						const total = ts - firstMedianTime - medianShift;
+						const range = pastMedianTime - firstMedianTime;
+						let delta = range / total;
+						// console.log({shift:ts-pastMedianTime,delta,ts,total:total/1000,range:range/1000,pastMedianTime,firstMedianTime,diff:(ts-pastMedianTime-medianShift)/1000,firstVsLast:(pastMedianTime-firstMedianTime)/1000});
+						if(pastMedianTime+medianShift >= ts) { //} || delta > 0.999) {
+							progress.update(100, { headerCount, blockCount });
+							await delay(256);
+							progress.stop();
+							ready = true;
+							// console.log("...network ");
+							continue;
+						}
+
+						const percentage = delta*100;
+						progress.update(Math.round(percentage), { headerCount, blockCount });
+
+					} break;
 				}
+
+				await delay(1000);
 			}
+
+			resolve();
 		})
 	}
 }
