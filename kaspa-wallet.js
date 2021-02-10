@@ -486,13 +486,25 @@ class KaspaWalletCli {
 
 			const headerSpan = 5000;
 
+			await this.rpc.connect();
+
 			let progress = null;
+
+			const syncWait = () => {
+				if(progress)
+					progress.stop();
+				progress = new cliProgress.SingleBar({
+					format: 'DAG sync - waiting [{bar}] Headers: {headerCount} Blocks: {blockCount} Elapsed: {duration_formatted}',
+					hideCursor, clearOnComplete, barsize
+				}, cliProgress.Presets.rect);
+				progress.start(headerSpan, 0);
+			}
 
 			const syncHeaders = () => {
 				if(progress)
 					progress.stop();
 				progress = new cliProgress.SingleBar({
-					format: 'DAG sync - headers [{bar}] {headerCount}',
+					format: 'DAG sync - headers [{bar}] {headerCount} - elapsed: {duration_formatted}',
 					hideCursor, clearOnComplete, barsize
 				}, cliProgress.Presets.rect);
 				progress.start(headerSpan, 0);
@@ -502,7 +514,7 @@ class KaspaWalletCli {
 				if(progress)
 					progress.stop();
 				progress = new cliProgress.SingleBar({
-					format: 'DAG sync - blocks [{bar}] {percentage}% | ETA: {eta}s',
+					format: 'DAG sync - blocks [{bar}] {percentage}% | ETA: {eta}s - elapsed: {duration_formatted}',
 					hideCursor, clearOnComplete, barsize
 				}, cliProgress.Presets.rect);
 				progress.start(100, 0);
@@ -526,6 +538,7 @@ class KaspaWalletCli {
 					case 'init': {
 						firstBlockCount = blockCount;
 						firstHeaderCount = headerCount;
+						syncWait();
 						sync = 'wait';
 					} break;
 
@@ -541,6 +554,9 @@ class KaspaWalletCli {
 							sync = 'headers';
 							syncHeaders();
 							continue;
+						}
+						else {
+							progress.update(0, { blockCount, headerCount });
 						}
 					} break;
 
@@ -579,6 +595,7 @@ class KaspaWalletCli {
 				await delay(1000);
 			}
 
+			console.log('network sync complete...');
 			resolve();
 		})
 	}
