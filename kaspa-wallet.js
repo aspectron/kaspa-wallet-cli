@@ -352,7 +352,7 @@ class KaspaWalletCli {
 
 			});
 
-		program
+			program
 			.command('info')
 			.description('internal wallet information')
 			.action(async (cmd, options) => {
@@ -386,6 +386,42 @@ class KaspaWalletCli {
 			});
 
 		program
+			.command('transactions')
+			.description('list wallet transactions')
+			.action(async (cmd, options) => {
+
+				try {
+
+					const wallet = await this.openWallet();
+					await this.networkSync();
+					this.setupLogs(wallet);
+					await wallet.sync(true);
+					const { balance } = wallet;
+					//console.log(wallet);
+					logger.warn('Please note - this is a beta feature that displays UTXOs only');
+					logger.warn('Historical transaction information will be available in the next release');
+					Object.entries(wallet.utxoSet.utxoStorage).forEach(([address, UTXOs])=>{
+						console.log(`${address}:`);
+						UTXOs.sort((a,b) => { return a.blockBlueScore - b.blockBlueScore; });
+						let width = 0;
+						UTXOs.forEach((utxo) => {
+							let kas = `${this.KAS(utxo.amount)}`;
+							if(kas.length > width)
+								width = kas.length;
+						})
+						UTXOs.forEach((utxo) => {
+							console.log(` +${this.KAS(utxo.amount, width+1)}`,`KAS`,`txid:`, `${utxo.transactionId} #${utxo.index}`.green,'Blue Score:', utxo.blockBlueScore.cyan);
+						})
+					})
+					this.rpc.disconnect();
+				} catch(ex) {
+					logger.error(ex.toString());
+				}
+
+			});
+
+
+		program
 			.command('address')
 			.description('show wallet address')
 			.action(async(cmd, options) => {
@@ -395,7 +431,10 @@ class KaspaWalletCli {
 					console.log('getting address for', this.network);
 					this.setupLogs(wallet);
 					await wallet.sync(true);
-					logger.info(wallet.receiveAddress);
+					console.log('');
+					console.log('You current wallet receive address is:');
+					console.log('');
+					console.log(wallet.receiveAddress);
 					this.rpc.disconnect();
 				} catch(ex) {
 					logger.error(ex.toString());
