@@ -86,7 +86,11 @@ class KaspaWalletCli {
 		const { options } = this;
 		const host = options.rpc || `127.0.0.1:${port}`;
 		this.rpc_ = new RPC({ clientConfig:{ host, reconnect : false, verbose : false } });
-		this.rpc_.onConnectFailure((reason)=>{ log.error(`gRPC - no connection to ${Wallet.networkTypes[network].name} at ${host} (${reason})`); });
+		this.rpc_.onConnectFailure((reason)=>{ 
+			log.error(`gRPC - no connection to ${Wallet.networkTypes[network].name} at ${host} (${reason})`); 
+			if(this.isNetworkSync)
+				this.resetNetworkSync = true;
+		});
 		//if(this._options.log == 'info')
 		//    this.rpc_.client.verbose = true;
 		return this.rpc_;
@@ -480,13 +484,18 @@ class KaspaWalletCli {
 
 		return new Promise(async (resolve, reject)=>{
 
+			this.isNetworkSync = true;
 			const barsize = 65;
 			const hideCursor = true;
 			const clearOnComplete = true;
 
 			const headerSpan = 5000;
 
-			await this.rpc.connect();
+			try {
+				await this.rpc.connect();
+			} catch(ex) {
+				logger.error(ex.toString());
+			}
 
 			let progress = null;
 
@@ -530,9 +539,20 @@ class KaspaWalletCli {
 			let ready = false;
 			while(!ready){
 				let bdi = await this.rpc.client.call('getBlockDagInfoRequest');
+
+				if(this.resetNetworkSync) {
+					this.resetNetworkSync = false;
+					progress.stop();
+					progress = null;
+					sync = 'init';
+				}
+
+				//let vspbs = await this.rpc.client.call('getVirtualSelectedParentBlueScoreRequest');
 				const pastMedianTime = parseInt(bdi.pastMedianTime);// + (75*1000);
 				const blockCount = parseInt(bdi.blockCount);
 				const headerCount = parseInt(bdi.headerCount);
+				//const { blueScore } = parseInt(vspbs.blueScore);
+
 
 				switch(sync) {
 					case 'init': {
@@ -596,6 +616,7 @@ class KaspaWalletCli {
 			}
 
 			console.log('network sync complete...');
+			this.isNetworkSync = false;
 			resolve();
 		})
 	}
