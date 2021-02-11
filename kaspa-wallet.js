@@ -311,6 +311,7 @@ class KaspaWalletCli {
 					console.log(`    Available: ${this.KAS(balance.available,12)} KAS`);
 					console.log(`      Pending: ${this.KAS(balance.pending,12)} KAS`);
 					console.log(`        Total: ${this.KAS(balance.total,12)} KAS`);
+					console.log('');
 					// console.log(wallet.balance);
 					this.rpc.disconnect();
 				} catch(ex) {
