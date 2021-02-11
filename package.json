@@ -27,5 +27,11 @@
     "@kaspa/grpc": "*",
     "@kaspa/grpc-node": "*",
     "@kaspa/wallet": "*"
-  }
+  },
+  "files": [
+    "kaspa-rpc.js",
+    "kaspa-wallet.js",
+    "README.md",
+    "tsconfig.json"
+  ]
 }
