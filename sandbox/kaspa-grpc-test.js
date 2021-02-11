@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-const {Client} = require('kaspa-grpc');
+const {Client} = require('@kaspa/grpc');
 
 
 const PORTS = {

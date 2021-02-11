@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 const { Command } = require('commander');
-const { RPC } = require('kaspa-grpc-node');
+const { RPC } = require('@kaspa/grpc-node');
 
 const networks = {
     mainnet: { port: 16110 },

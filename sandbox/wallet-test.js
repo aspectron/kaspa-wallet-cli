@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
-const { Wallet, initKaspaFramework } = require('kaspa-wallet');
+const { Wallet, initKaspaFramework } = require('@kaspa/wallet');
 
 //Wallet.setWorkerLogLevel('none')
 
-const {RPC} = require('kaspa-grpc-node');
+const {RPC} = require('@kaspa/grpc-node');
 
 const network = 'kaspatest';
 

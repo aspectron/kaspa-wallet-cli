@@ -1,4 +1,4 @@
-const { Wallet, kaspaSetup } = require('kaspa-wallet');
+const { Wallet, kaspaSetup } = require('@kaspa/wallet');
 import {log} from './helper';
 import {Api, CB, Error} from './interfaces';
 import {GRPCClient} from './grpc-client';

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-const { Wallet, initKaspaFramework } = require('kaspa-wallet');
-const { RPC } = require('kaspa-grpc-node');
+const { Wallet, initKaspaFramework } = require('@kaspa/wallet');
+const { RPC } = require('@kaspa/grpc-node');
 
 const network = 'kaspadev';
 const rpc = new RPC({

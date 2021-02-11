@@ -2,8 +2,8 @@
 
 const cliProgress = require('cli-progress');
 const { Command } = require('commander');
-const { Wallet, initKaspaFramework, log : walletLogger, Storage, FlowLogger} = require('kaspa-wallet');
-const { RPC } = require('kaspa-grpc-node');
+const { Wallet, initKaspaFramework, log : walletLogger, Storage, FlowLogger} = require('@kaspa/wallet');
+const { RPC } = require('@kaspa/grpc-node');
 const { delay } = require('@aspectron/flow-async');
 const Decimal = require('decimal.js');
 const fs = require("fs");
