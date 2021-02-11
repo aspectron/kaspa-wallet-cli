@@ -2,7 +2,7 @@
 
 const cliProgress = require('cli-progress');
 const { Command } = require('commander');
-const { Wallet, initKaspaFramework, log, Storage, FlowLogger} = require('kaspa-wallet');
+const { Wallet, initKaspaFramework, log : walletLogger, Storage, FlowLogger} = require('kaspa-wallet');
 const { RPC } = require('kaspa-grpc-node');
 const { delay } = require('@aspectron/flow-async');
 const Decimal = require('decimal.js');
@@ -11,8 +11,8 @@ const ReadLine = require('readline');
 const Writable = require('stream').Writable;
 const program = new Command();
 const storage = new Storage({logLevel:'debug'});
-const logger = new FlowLogger('WALLET', {
-	display : ['level'],
+const log = new FlowLogger('KaspaWallet', {
+	display : ['level','time','name'],
 	color: ['level', 'content']
 })
 const mutableStdout = new Writable({
@@ -109,7 +109,7 @@ class KaspaWalletCli {
 	setupLogs(wallet){
 		const level = (this.options.verbose&&'verbose')||(this.options.debug&&'debug')||(this.options.log)||'info';
 		wallet.setLogLevel(level);
-		log.level = level;
+		walletLogger.level = level;
 	}
 
 	openWallet() {
@@ -131,8 +131,11 @@ class KaspaWalletCli {
 
 	decryptWallet(mnemonic){
 		return new Promise(async (resolve,reject) => {
+			let attempts = 0;
+			let max_attempts = 5;
 			const openWallet_ = async(password)=>{
-
+				
+				attempts++;
 				let decrypted = await this.decryptMnemonic(password, mnemonic)
 				.catch(e=>{
 					// logger.error(e);
@@ -140,10 +143,14 @@ class KaspaWalletCli {
 				let {privKey, seedPhrase} = decrypted||{}
 
 				if(!privKey){
-					logger.info(`Unable to decrypt wallet - invalid password`);
+					console.log(`Unable to decrypt wallet - invalid password`.red);
+					if(attempts > max_attempts) {
+						console.log(`Unable to decrypt wallet - too many attempts, giving up`.red);
+						process.exit(1);
+					}
 					Prompt({
 						muted:true,
-						question:"Please provide password (2nd attempt): ",
+						question:`Please enter password (${attempts}${[,'st','nd','rd','th','th'][attempts]} attempt): `.yellow,
 						CB: openWallet_,
 						errorCB:()=>{
 							//logger.error("Invalid password");
@@ -153,15 +160,17 @@ class KaspaWalletCli {
 					return;
 				}
 
+				process.stdout.write('\n');
 				const {network, rpc} = this;
-				let wallet = new Wallet(privKey, seedPhrase, { network, rpc })
+				let wallet = new Wallet(privKey, seedPhrase, { network, rpc });
 				resolve(wallet);
 			}
 
-			logger.info("To unlock your wallet please provide your password")
+			attempts++;
+			console.log("To unlock your wallet please provide your wallet password");
 			Prompt({
 				muted:true,
-				question:"please provide wallet password: ",
+				question:"please enter password: ".yellow,
 				CB:openWallet_,
 				errorCB:()=>{
 					//logger.error("Invalid password");
@@ -211,7 +220,7 @@ class KaspaWalletCli {
 		    .action(async (cmd, options) => {
 
 				if(!this.options.sync) {
-					logger.error('you can not use --no-sync flag when running network sync');
+					log.error('you can not use --no-sync flag when running network sync');
 					return;
 				}
 				await this.networkSync();
@@ -232,7 +241,7 @@ class KaspaWalletCli {
 					await wallet.sync();
 					wallet.on("balance-update", (detail)=>{
 						const { total, available, pending } = detail;
-						console.log(`Balance Update: available:`,available, `pending:`,pending, `total:`,total);
+						console.log(`Balance Update: available:`,`${this.KAS(available)}`.cyan, `pending:`,`${this.KAS(pending)}`.cyan, `total:`,`${this.KAS(total)}`.cyan);
 						console.log(``);
 					})
 
@@ -240,13 +249,13 @@ class KaspaWalletCli {
 					wallet.on("utxo-change", (detail)=>{
 						//console.log(`UTXO Change:`,'added:', detail.added.entries(), 'removed:', detail.removed.entries());
 						detail.added.forEach((v, k)=>{
-							console.log("UTXO Change added");
+							console.log("UTXOs added");
 							console.log("  address:",k.green);
 							v.forEach(entry=>{
 								console.log("  transactionId:", `${entry.transactionId} #${entry.index}`.green);
 								console.log("  scriptPublicKey:", entry.scriptPublicKey.scriptPublicKey, "version:", entry.scriptPublicKey.version);
 								console.log("  blockBlueScore:", entry.blockBlueScore.cyan,"isCoinbase:", entry.isCoinbase);
-								console.log("  amount:", entry.amount);
+								console.log("  amount:", this.KAS(entry.amount).cyan,'KAS');
 								console.log(``);
 							})	
 						})
@@ -264,7 +273,7 @@ class KaspaWalletCli {
 						// removed = [...removed.values()].flat();
 					});
 				} catch(ex) {
-					logger.error(ex.toString());
+					log.error(ex.toString());
 				}
 			});
 
@@ -288,7 +297,7 @@ class KaspaWalletCli {
 					// console.log(wallet.balance);
 					this.rpc.disconnect();
 				} catch(ex) {
-					logger.error(ex.toString());
+					log.error(ex.toString());
 				}
 			});
 
@@ -342,12 +351,12 @@ class KaspaWalletCli {
 						console.log(`        Total: ${this.KAS(wallet.balance.total,12)} KAS`);
 					} catch(ex) {
 						//console.log(ex);
-						logger.error(ex.toString());
+						log.error(ex.toString());
 					}
 
 					this.rpc.disconnect();
 				} catch(ex) {
-					logger.error(ex.toString());
+					log.error(ex.toString());
 				}
 
 			});
@@ -366,12 +375,13 @@ class KaspaWalletCli {
 					const { balance } = wallet;
 					//console.log(wallet);
 					console.log("");
-					console.log("current network blue score:", wallet.blueScore.cyan);
-					console.log("network:", wallet.network);
+					console.log("network:", wallet.network.yellow);
+					console.log("blue score:", wallet.blueScore.cyan);
+					console.log("---");
 					console.log("current address:", wallet.addressManager.receiveAddress.current.address.green);
-					console.log(`balance available:`, this.KAS(wallet.balance.available).green, `KAS`.green,
-					` pending:`, this.KAS(wallet.balance.pending).green, `KAS`.green, 
-					` total:`, this.KAS(wallet.balance.total).green, `KAS`.green);
+					console.log(`balance available:`, `${this.KAS(wallet.balance.available)} KAS`.cyan,
+					` pending:`, `${this.KAS(wallet.balance.pending)} KAS`.cyan, 
+					` total:`, `${this.KAS(wallet.balance.total)} KAS`.cyan);
 					console.log("receive addresses used:",wallet.addressManager.receiveAddress.counter);
 					console.log("change addresses used: ",wallet.addressManager.changeAddress.counter);
 					console.log("UTXO storage: ");
@@ -380,7 +390,7 @@ class KaspaWalletCli {
 					})
 					this.rpc.disconnect();
 				} catch(ex) {
-					logger.error(ex.toString());
+					log.error(ex.toString());
 				}
 
 			});
@@ -398,8 +408,8 @@ class KaspaWalletCli {
 					await wallet.sync(true);
 					const { balance } = wallet;
 					//console.log(wallet);
-					logger.warn('Please note - this is a beta feature that displays UTXOs only');
-					logger.warn('Historical transaction information will be available in the next release');
+					log.warn('Please note - this is a beta feature that displays UTXOs only');
+					log.warn('Historical transaction information will be available in the next release');
 					Object.entries(wallet.utxoSet.utxoStorage).forEach(([address, UTXOs])=>{
 						console.log(`${address}:`);
 						UTXOs.sort((a,b) => { return a.blockBlueScore - b.blockBlueScore; });
@@ -415,7 +425,7 @@ class KaspaWalletCli {
 					})
 					this.rpc.disconnect();
 				} catch(ex) {
-					logger.error(ex.toString());
+					log.error(ex.toString());
 				}
 
 			});
@@ -437,7 +447,7 @@ class KaspaWalletCli {
 					console.log(wallet.receiveAddress);
 					this.rpc.disconnect();
 				} catch(ex) {
-					logger.error(ex.toString());
+					log.error(ex.toString());
 				}
 			})
 
@@ -484,7 +494,7 @@ class KaspaWalletCli {
 						CB:(pass)=>{
 							if(!pass) {
 								console.log('\n');
-								logger.error('invalid password');
+								log.error('invalid password');
 								return;
 							}
 							if(!prev)
@@ -494,12 +504,12 @@ class KaspaWalletCli {
 								return next(pass);
 							else {
 								console.log('\n');
-								logger.error('passwords do not match')
+								log.error('passwords do not match')
 								return;
 							}
 						},
 						errorCB:()=>{
-							logger.error("invalid password");
+							log.error("invalid password");
 						}
 					})
 				}
@@ -516,6 +526,37 @@ class KaspaWalletCli {
 		program.parse(process.argv);
 	}
 
+
+	getDuration(ts) {
+		if(!ts)
+			return '--:--:--';
+		let delta = Math.round(ts / 1000);
+		let sec_ = (delta % 60);
+		let min_ = Math.floor(delta / 60 % 60);
+		let hrs_ = Math.floor(delta / 60 / 60 % 24);
+		let days = Math.floor(delta / 60 / 60 / 24);
+
+		let sec = (sec_<10?'0':'')+sec_;
+		let min = (min_<10?'0':'')+min_;
+		let hrs = (hrs_<10?'0':'')+hrs_;
+
+		if(days && days >= 1) {
+			return `${days.toFixed(0)} day${days>1?'s':''} ${hrs}h ${min}m ${sec}s`;
+		} else {
+			let t = '';
+			if(hrs_)
+				t += hrs+'h ';
+			if(hrs_ || min_) {
+				t += min+'m ';
+				t += sec+'s ';
+			}
+			else {
+				t += sec_.toFixed(1)+' seconds';
+			}
+			return t;
+		}
+	}
+
 	networkSync(){
 
 		if(this.options.sync === false)
@@ -524,6 +565,7 @@ class KaspaWalletCli {
 		return new Promise(async (resolve, reject)=>{
 
 			this.isNetworkSync = true;
+			const nsTs0 = Date.now();
 			const barsize = 65;
 			const hideCursor = true;
 			const clearOnComplete = true;
@@ -533,8 +575,11 @@ class KaspaWalletCli {
 			try {
 				await this.rpc.connect();
 			} catch(ex) {
-				logger.error(ex.toString());
+				log.error(ex.toString());
+				process.exit(1);
 			}
+
+			log.info(`sync ... starting network sync`);
 
 			let progress = null;
 
@@ -545,7 +590,7 @@ class KaspaWalletCli {
 					format: 'DAG sync - waiting [{bar}] Headers: {headerCount} Blocks: {blockCount} Elapsed: {duration_formatted}',
 					hideCursor, clearOnComplete, barsize
 				}, cliProgress.Presets.rect);
-				progress.start(headerSpan, 0);
+				progress.start(headerSpan, 0, { headerCount : '...', blockCount: '...' });
 			}
 
 			const syncHeaders = () => {
@@ -654,7 +699,8 @@ class KaspaWalletCli {
 				await delay(1000);
 			}
 
-			console.log('network sync complete...');
+			const nsDelta = Date.now()-nsTs0;
+			log.info(`sync ... finished (network sync done in ${this.getDuration(nsDelta)})`);
 			this.isNetworkSync = false;
 			resolve();
 		})
