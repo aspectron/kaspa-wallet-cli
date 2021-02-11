@@ -10,13 +10,13 @@ Installing Kaspa Wallet
 -----------------------
 
 ```
-npm install -g aspectron/kaspa-wallet-cli
+npm install -g @kaspa/wallet-cli
 kaspa-wallet
 ```
 
 Cloning Kaspa Wallet
 --------------------
-
+The following applies to development environment only:
 ```
 git clone git@github.com:aspectron/kaspa-wallet-cli
 cd kaspa-wallet-cli
