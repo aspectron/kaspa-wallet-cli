@@ -11,6 +11,7 @@ const ReadLine = require('readline');
 const Writable = require('stream').Writable;
 const program = new Command();
 const storage = new Storage({logLevel:'debug'});
+const pkg = require('./package.json');
 const log = new FlowLogger('KaspaWallet', {
 	display : ['level','time','name'],
 	color: ['level', 'content']
@@ -211,8 +212,8 @@ class KaspaWalletCli {
 
 		const logLevels = ['error','warn','info','verbose','debug'];
 		program
-			.version('0.0.1', '--version')
-			.description('Kaspa Wallet client')
+			.version(pkg.version, '--version')
+			.description(`Kaspa Wallet CLI v${pkg.version}`)
 			.helpOption('--help','display help for command')
 			.option('--no-sync','disable network sync for all operations')
 			.option('--log <level>',`set log level ${logLevels.join(', ')}`, (level)=>{
