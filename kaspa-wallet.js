@@ -86,10 +86,26 @@ class KaspaWalletCli {
 		const { options } = this;
 		const host = options.rpc || `127.0.0.1:${port}`;
 		this.rpc_ = new RPC({ clientConfig:{ host, reconnect : false, verbose : false } });
-		this.rpc_.onConnectFailure((reason)=>{ 
-			log.error(`gRPC - no connection to ${Wallet.networkTypes[network].name} at ${host} (${reason})`); 
-			if(this.isNetworkSync)
-				this.resetNetworkSync = true;
+		this.rpc_.onConnectFailure((reason)=>{
+			const msg = `gRPC - no connection to ${Wallet.networkTypes[network].name} at ${host} (${reason})`;
+			if(this.isNetworkSync) {
+				switch(this.syncState) {
+					case 'connect': {
+						log.error(this.syncState,msg);
+					} break;
+					case 'init':
+					case 'wait': {
+						console.log('');
+						log.error(this.syncState,msg);
+						process.exit(1);
+					} break;
+					default: {
+						console.log('');
+						log.error(this.syncState,msg);
+						this.resetNetworkSync = true;
+					} break;
+				}
+			}
 		});
 		//if(this._options.log == 'info')
 		//    this.rpc_.client.verbose = true;
@@ -565,6 +581,7 @@ class KaspaWalletCli {
 		return new Promise(async (resolve, reject)=>{
 
 			this.isNetworkSync = true;
+			this.syncState = 'connect';
 			const nsTs0 = Date.now();
 			const barsize = 65;
 			const hideCursor = true;
@@ -579,6 +596,7 @@ class KaspaWalletCli {
 				process.exit(1);
 			}
 
+			this.syncState = 'init';
 			log.info(`sync ... starting network sync`);
 
 			let progress = null;
@@ -597,7 +615,7 @@ class KaspaWalletCli {
 				if(progress)
 					progress.stop();
 				progress = new cliProgress.SingleBar({
-					format: 'DAG sync - headers [{bar}] {headerCount} - elapsed: {duration_formatted}',
+					format: 'DAG sync - headers [{bar}] Headers: {headerCount} - elapsed: {duration_formatted}',
 					hideCursor, clearOnComplete, barsize
 				}, cliProgress.Presets.rect);
 				progress.start(headerSpan, 0);
@@ -615,20 +633,25 @@ class KaspaWalletCli {
 
 			const medianOffset = 45*1000; // allow 45 sec behind median
 			const medianShift = Math.ceil(263*0.5*1000+medianOffset);
-			let sync = 'init';
 			let firstBlockCount;
 			let firstHeaderCount;
 			let firstMedianTime;
 
 			let ready = false;
 			while(!ready){
-				let bdi = await this.rpc.client.call('getBlockDagInfoRequest');
+				let bdi = await this.rpc.client.call('getBlockDagInfoRequest').catch((ex)=>{
+					console.log('');
+					log.error(ex.toString());
+					log.error('giving up...');
+					process.exit(1);
+				});
 
 				if(this.resetNetworkSync) {
 					this.resetNetworkSync = false;
-					progress.stop();
+					if(progress)
+						progress.stop();
 					progress = null;
-					sync = 'init';
+					this.syncState = 'init';
 				}
 
 				//let vspbs = await this.rpc.client.call('getVirtualSelectedParentBlueScoreRequest');
@@ -638,24 +661,24 @@ class KaspaWalletCli {
 				//const { blueScore } = parseInt(vspbs.blueScore);
 
 
-				switch(sync) {
+				switch(this.syncState) {
 					case 'init': {
 						firstBlockCount = blockCount;
 						firstHeaderCount = headerCount;
 						syncWait();
-						sync = 'wait';
+						this.syncState = 'wait';
 					} break;
 
 					case 'wait': {
 						if(firstBlockCount != blockCount) {
-							sync = 'blocks';
+							this.syncState = 'blocks';
 							syncBlocks();
 							firstMedianTime = pastMedianTime;
 							continue;
 						}
 						else
 						if(firstHeaderCount != headerCount) {
-							sync = 'headers';
+							this.syncState = 'headers';
 							syncHeaders();
 							continue;
 						}
@@ -667,7 +690,7 @@ class KaspaWalletCli {
 					case 'headers': {
 						progress.update(headerCount % headerSpan, { headerCount, blockCount });
 						if(firstBlockCount != blockCount) {
-							sync = 'blocks';
+							this.syncState = 'blocks';
 							syncBlocks();
 							firstMedianTime = pastMedianTime;
 							continue;
