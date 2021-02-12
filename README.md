@@ -64,8 +64,8 @@ gRPC Interface Utility
 Kaspa Wallet provides a test utility `rpc.js` allowing you to send RPC commands to `kaspad` from the terminal:
 
 ```
-$ node rpc
-Usage: rpc [options] [command]
+$ node kaspa-rpc
+Usage: kaspa-rpc [options] [command]
 
 Kaspa gRPC client
 
@@ -74,6 +74,7 @@ Options:
   --testnet                                         use testnet network
   --devnet                                          use devnet network
   --simnet                                          use simnet network
+  --server <server>:<port>                          use custom gRPC server endpoint
   -h, --help                                        display help for command
 
 Commands:
@@ -84,9 +85,10 @@ Commands:
   requestNextHeaders                                gRPC call requestNextHeaders
   requestRelayBlocks [options]                      gRPC call requestRelayBlocks
   requestTransactions [options]                     gRPC call requestTransactions
-  requestIBDRootUTXOSetAndBlock [options]           gRPC call requestIBDRootUTXOSetAndBlock
+  requestPruningPointUTXOSetAndBlock [options]      gRPC call requestPruningPointUTXOSetAndBlock
   requestIBDBlocks [options]                        gRPC call requestIBDBlocks
-  requestIBDRootHash                                gRPC call requestIBDRootHash
+  requestPruningPointHash                           gRPC call requestPruningPointHash
+  requestNextPruningPointUtxoSetChunk               gRPC call requestNextPruningPointUtxoSetChunk
   getCurrentNetwork                                 gRPC call getCurrentNetwork
   submitBlock [options]                             gRPC call submitBlock
   getBlockTemplate [options]                        gRPC call getBlockTemplate
@@ -113,6 +115,9 @@ Commands:
   getUtxosByAddresses [options]                     gRPC call getUtxosByAddresses
   getVirtualSelectedParentBlueScore                 gRPC call getVirtualSelectedParentBlueScore
   notifyVirtualSelectedParentBlueScoreChanged       gRPC call notifyVirtualSelectedParentBlueScoreChanged
+  ban [options]                                     gRPC call ban
+  unban [options]                                   gRPC call unban
+  getInfo                                           gRPC call getInfo
   help [command]                                    display help for command
   ```
 
