@@ -2,6 +2,7 @@
 
 const { Command } = require('commander');
 const { RPC } = require('@kaspa/grpc-node');
+const pkg = require('./package.json');
 
 const networks = {
     mainnet: { port: 16110 },
@@ -21,8 +22,7 @@ class KaspaInterface {
             .option('--testnet')
             .option('--devnet')
             .option('--simnet')
-            .option('--port <port>')
-            .option('--rpcserver <server>');
+            .option('--server <server>:<port>');
         init.parse();
         const options = init.opts();
         let network = 'mainnet';
@@ -34,11 +34,11 @@ class KaspaInterface {
                 network = k;
         });
 
-        let { host } = options;
+        let { server : host } = options;
         if(!host)
             host = `127.0.0.1:${networks[network].port}`;
 
-        const rpc = new RPC({ clientConfig:{ host } })
+        const rpc = new RPC({ clientConfig:{ host, disableConnectionCheck : true } })
         rpc.client.verbose = true;
         const proto = rpc.client.proto;
         const methods = proto.KaspadMessage.type.field
@@ -51,11 +51,13 @@ class KaspaInterface {
         }
 
         program
-            .version('0.0.1','--version')
+            //.allowUnknownOption()
+            .version(pkg.version,'--version')
             .description('Kaspa gRPC client')
             .option('--testnet','use testnet network')
             .option('--devnet','use devnet network')
             .option('--simnet','use simnet network')
+            .option('--server <server>:<port>','use custom gRPC server endpoint');
             ;
 
         program
