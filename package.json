@@ -1,6 +1,6 @@
 {
   "name": "@kaspa/wallet-cli",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Kaspa Command Line Wallet Interface",
   "main": "kaspa-wallet.js",
   "preferGlobal": true,
