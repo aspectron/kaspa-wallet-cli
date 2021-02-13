@@ -92,17 +92,17 @@ class KaspaWalletCli {
 			if(this.isNetworkSync) {
 				switch(this.syncState) {
 					case 'connect': {
-						log.error(this.syncState,msg);
+						log.error(msg);
 					} break;
 					case 'init':
 					case 'wait': {
 						console.log('');
-						log.error(this.syncState,msg);
+						log.error(msg);
 						process.exit(1);
 					} break;
 					default: {
 						console.log('');
-						log.error(this.syncState,msg);
+						log.error(msg);
 						this.resetNetworkSync = true;
 					} break;
 				}
