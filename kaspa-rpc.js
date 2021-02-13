@@ -100,13 +100,23 @@ class KaspaInterface {
                 cmd.option(`--${f.name} <${f.name}>`, `Request argument ${f.name} of ${f.type}, default will be (${f.defaultValue}) `)
             })
 
-            cmd.action(async (cmd, options) => {
+            cmd.option(`--args`,`show help for cmd`, ()=>{
+                fields.forEach(f=>{
+                    console.log(f);
+                })
+            })
 
+            cmd.action(async (cmd, options) => {
+                // console.log("supplied options",cmd);
                 let args = {};
 
                 fields.forEach(f=>{
                     if(cmd[f.name] !== undefined){
-                        args[f.name] = cmd[f.name] || 1;
+                        if(typeof cmd[f.name] == 'boolean')
+                            args[f.name] = 1;
+                            // args[f.name] = cmd[f.name] || 1;
+                        else
+                            args[f.name] = JSON.parse(cmd[f.name]);
                     }
                 })
 
