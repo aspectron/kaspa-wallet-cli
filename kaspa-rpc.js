@@ -66,25 +66,6 @@ class KaspaInterface {
         const methods = proto.KaspadMessage.type.field
             .filter(({name})=>/request/i.test(name));
 
-        program.addHelpText(`after`,`
-
-Please note, when supplying JSON formatted arguments from a shell, you must escape quotes.
-
-Examples:
-
-  Get list of UTXOs for an address:
-  ${`kaspa-rpc --verbose --testnet getUtxosByAddresses --addresses=[\\"kaspatest:qru9nrs0mjcrfnl7rpxhhe33l3sxzgrc3ypkvkx57u\\"]`.yellow}
-
-  Monitor DAG Blue Score:
-  ${`kaspa-rpc --testnet --subscribe notifyVirtualSelectedParentBlueScoreChanged`.yellow}
-
-  Get list of UTXOs for an address (load address list from file):
-  ${`kaspa-rpc --verbose --testnet getUtxosByAddresses --args=file.js`.yellow}
-
-  Where file.js contains: ${`{ addresses : ['kaspatest:qru9nrs0mjcrfnl7rpxhhe33l3sxzgrc3ypkvkx57u'] }`.yellow}
-  (note that args file is JavaScript syntax and can contain comments)
-
-        `);
 
         program
             .version(pkg.version,'--version')
@@ -96,8 +77,12 @@ Examples:
             .option('--simnet','use simnet network')
             .option('--server <host>:<port>','use custom gRPC server')
             .option('--subscribe','create a subscription channel')
-            .option('--args <filename>','read arguments from JavaScript file')
+            .option('--file <filename>','read arguments from file')
             ;
+
+        program.addHelpText('after',`
+Please run ${'kaspa-rpc help'.yellow} for addition information and examples.        
+        `)
 
             
         program
@@ -127,12 +112,58 @@ Examples:
                 this.rpc.disconnect();
             });
 
+        program
+            .command('help')
+            .description('list available gRPC commands and examples')
+            .action(async (cmd, options) => {
+                console.log('');
+                console.log(`Usage: kaspa-rpc [options] <gRPC method> [gRPC method options]`);
+                console.log('');
+                console.log(`Kaspa gRPC client ${pkg.version}`);
+                console.log('');
+                console.log('Following gRPC commands are available:');
+                console.log('');
+                let padding = methods.map(method=>method.name.replace(/Request$/,'').length).reduce((a,b)=>Math.max(a,b),0);
+                console.log(`  ${"Method".padEnd(padding)}  Options`);
+                console.log(`  ${"------".padEnd(padding)}  -------`);
+                methods.forEach(method=>{
+                    const {name, typeName} = method;
+                    const fn = name.replace(/Request$/,'');
+                    let fields = proto[typeName].type.field;
+                    let opts = fields.map(f=>`--${f.name}`);
+
+                    let descr = `  ${fn.padEnd(padding)}  ${opts.length?opts.join(' '):''}`;
+                    console.log(descr);
+                });
+                console.log(`
+Please note, when supplying JSON formatted arguments from a shell, you must escape quotes.
+
+Examples:
+
+    Get additional help information on gRPC method:
+    $ ${`kaspa-rpc addPeer --help`.yellow}
+
+    Get list of UTXOs for an address:
+    $ ${`kaspa-rpc --verbose --testnet getUtxosByAddresses --addresses=[\\"kaspatest:qru9nrs0mjcrfnl7rpxhhe33l3sxzgrc3ypkvkx57u\\"]`.yellow}
+
+    Monitor DAG Blue Score:
+    $ ${`kaspa-rpc --testnet --subscribe notifyVirtualSelectedParentBlueScoreChanged`.yellow}
+
+    Get list of UTXOs for an address (load address list from file):
+    $ ${`kaspa-rpc --verbose --testnet getUtxosByAddresses --args=file.js`.yellow}
+
+    Where file.js can contain: ${`{ addresses : ['kaspatest:qru9nrs0mjcrfnl7rpxhhe33l3sxzgrc3ypkvkx57u'] }`.yellow}
+    (note that the file uses JavaScript syntax and can contain comments or NodeJS code producing an Object)
+
+`);
+            });
+
         methods.forEach(method=>{
             const {name, typeName} = method;
             const fn = name.replace(/Request$/,'');
             let fields = proto[typeName].type.field;
             let opts = fields.map(f=>`--${f.name}`);
-            let cmd = program.command(fn).description(opts.length?opts.join(' '):'');
+            let cmd = program.command(fn, { hidden : true }).description(opts.length?opts.join(' '):'');
             fields.forEach(f=>{
                 cmd.option(`--${f.name} <${f.name}>`, `Request argument ${f.name} of ${f.type}, ${f.defaultValue ? `default value will be ${f.defaultValue}` : `by default this argument is absent`}`)
             })
@@ -158,8 +189,8 @@ Examples:
                     }
                 })
 
-                if(this.options.args) {
-                    let file = this.options.args;
+                if(this.options.file) {
+                    let file = this.options.file;
                     if(!fs.existsSync(file)) {
                         console.log("Unable to locate",file);
                         process.exit(0);
