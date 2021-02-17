@@ -1,6 +1,6 @@
 {
   "name": "@kaspa/wallet-cli",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "Kaspa Command Line Wallet Interface",
   "main": "kaspa-wallet.js",
   "preferGlobal": true,
@@ -21,7 +21,7 @@
     "decimal.js": "^10.2.1",
     "@kaspa/grpc": ">=0.0.5",
     "@kaspa/grpc-node": ">=0.0.4",
-    "@kaspa/wallet": ">=0.0.6"
+    "@kaspa/wallet": ">=0.0.7"
   },
   "devDependencies": {
     "typescript": "*",
