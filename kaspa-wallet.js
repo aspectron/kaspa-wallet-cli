@@ -9,6 +9,7 @@ const Decimal = require('decimal.js');
 const fs = require("fs");
 const ReadLine = require('readline');
 const Writable = require('stream').Writable;
+const qrcode = require('qrcode-terminal');
 const program = new Command();
 const storage = new Storage({logLevel:'debug'});
 const pkg = require('./package.json');
@@ -468,6 +469,36 @@ class KaspaWalletCli {
 					log.error(ex.toString());
 				}
 			})
+
+		program
+			.command('qrcode')
+			.description('show wallet address qrcode')
+			.option('--amount <amount>', "amount of KAS included in qr code request")
+			.action(async(cmd, options) => {
+				const { amount } = cmd;
+				try {
+					const wallet = await this.openWallet();
+					console.log('getting address for', this.network);
+					this.setupLogs(wallet);
+					await wallet.sync(true);
+					let url = wallet.receiveAddress;
+					
+					if(amount) {
+						let v = parseInt(amount);
+						if(!isNaN(v) && v > 0)
+							url += `?=amount=${v}`;
+					}
+					console.log('');
+					console.log('');
+					console.log(wallet.receiveAddress);
+					qrcode.generate(url);
+					console.log('');
+					this.rpc.disconnect();
+				} catch(ex) {
+					log.error(ex.toString());
+				}
+			})
+
 
 		program
 			.command('create')

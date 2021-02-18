@@ -1,6 +1,6 @@
 {
   "name": "@kaspa/wallet-cli",
-  "version": "0.0.12",
+  "version": "0.0.14",
   "description": "Kaspa Command Line Wallet Interface",
   "main": "kaspa-wallet.js",
   "preferGlobal": true,
@@ -15,13 +15,14 @@
   "license": "ISC",
   "dependencies": {
     "@aspectron/flow-async": "^1.0.0",
+    "@kaspa/grpc": ">=0.0.5",
+    "@kaspa/grpc-node": ">=0.0.4",
+    "@kaspa/wallet": ">=0.0.8",
     "blake2b-wasm": "^2.1.0",
     "cli-progress": "^3.9.0",
     "commander": ">=7.0.0",
     "decimal.js": "^10.2.1",
-    "@kaspa/grpc": ">=0.0.5",
-    "@kaspa/grpc-node": ">=0.0.4",
-    "@kaspa/wallet": ">=0.0.8"
+    "qrcode-terminal": "^0.12.0"
   },
   "devDependencies": {
     "typescript": "*",
