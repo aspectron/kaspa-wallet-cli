@@ -616,7 +616,7 @@ class KaspaWalletCli {
 			this.isNetworkSync = true;
 			this.syncState = 'connect';
 			const nsTs0 = Date.now();
-			const barsize = 65;
+			const barsize = 45;
 			const hideCursor = true;
 			const clearOnComplete = true;
 
