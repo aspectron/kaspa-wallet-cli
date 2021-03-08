@@ -5,6 +5,8 @@ const { RPC } = require('@kaspa/grpc-node');
 const pkg = require('./package.json');
 const { fstat } = require('fs');
 const { colors } = require('@aspectron/colors.ts');
+const NATS = require('nats');
+const jc = NATS.JSONCodec();
 
 const networks = {
     mainnet: { port: 16110 },
@@ -158,6 +160,51 @@ Examples:
 `);
             });
 
+/*
+        program
+        .command('nats')
+        .description('serve the wallet API via NATS')
+        .action(async (cmd, options) => {
+
+            await this.connectNATS();
+
+
+            methods.forEach(method=>{
+                const {name, typeName} = method;
+                const fn = name.replace(/Request$/,'');
+                let fields = proto[typeName].type.field;
+
+                let subscription = this.nats.subscribe(name);
+                (async()=>{
+                    for await(const msg of subscription) {
+                        try {
+
+                            const args = msg.data ? jc.decode(msg.data) : { };
+                            this.rpc.request(name, args)
+                            .then((result)=>{
+                                console.log(JSON.stringify(result,null,'    '));
+
+                                if(msg.reply)
+                                    msg.respond(jc.encode(result));
+                            })
+                            .catch(error=>{
+                                console.log("Error:", error.toString())
+                                if(msg.reply)
+                                    msg.respond(jc.encode(result));
+                            })
+
+                        } catch(error) {
+                            this.nats.publish('KASPA.WALLET.error', jc.encode({ error }));
+                            if(msg.reply) {
+                                msg.respond(jc.encode({error}));
+                            }
+                        }
+                    }
+                })().then();
+
+            });
+        });
+*/
         methods.forEach(method=>{
             const {name, typeName} = method;
             const fn = name.replace(/Request$/,'');
@@ -245,6 +292,73 @@ Examples:
 
         program.parse(process.argv);
     }
+
+/*
+
+	async connectNATS(options) {
+
+		let natsHostInfo = `${options?.host||'localhost'}:${options?.port||4222}`;
+
+		this.nats = await NATS.connect(options);
+		// console.log("NATS CONNECTION:",nc);
+		//this.nats_conn.push(nc);
+
+		(async () => {
+			console.info(`connected ${this.nats.getServer()}`);
+			for await (const status of this.nats.status()) {
+				//console.info(`NATS: ${status.type}: ${status.data}`);
+			}
+		})().then();
+
+		this.nats.closed().then((err) => {
+			console.log(`connection closed ${err ? " with error: " + err.message : ""}`);
+		});			
+
+		this.online = true;
+		this.log(`NATS connected to ${natsHostInfo}`);
+		// console.log(nc);
+		
+		
+		const { info } = this.nats;
+
+		this.log('');
+		const entries = Object.entries(info);
+		let padding = entries.map(([k]) => k.length).reduce((a,k) => Math.max(k,a));
+		entries.forEach(([k,v]) => {
+			this.log(`${k}:`.padStart(padding+1,' '),(v+'').brightWhite);
+		})
+		this.log('');		
+
+	}
+
+	async stopNATS() {
+        if(this.nats) {
+		    await this.nats.drain();
+            this.nats.close();
+            delete this.nats;
+        }
+	}
+
+    async shutdown() {
+        await this.stopNATS();
+        this.rpc.close();
+    }
+
+	interrupt() {
+		return (signal) => {
+			if(signal)
+				this.log(`^${signal}...`);
+			this.shutdown().then(() => {
+				this.log("shutdown ok");
+				process.exit();
+			}, (err) => {
+				this.log("shutdown failure:", err);
+				process.exit();
+			});
+		}
+	}
+*/
+
 }
 
 (async()=>{
