@@ -295,6 +295,17 @@ class KaspaWalletCli {
 				}
 			});
 
+
+		const printBalance = (balance)=>{
+			console.log('');
+			console.log(`Wallet balance`+(this.network=='kaspa'?'':` (${Wallet.networkTypes[this.network].name}):`));
+			console.log('');
+			console.log(`    Available: ${this.KAS(balance.available,12)} KAS`);
+			console.log(`      Pending: ${this.KAS(balance.pending,12)} KAS`);
+			console.log(`        Total: ${this.KAS(balance.total,12)} KAS`);
+			console.log('');
+		}
+
 		program
 			.command('balance')
 			.description('display wallet balance')
@@ -305,14 +316,7 @@ class KaspaWalletCli {
 					this.setupLogs(wallet);
 					await wallet.sync(true);
 					const { balance } = wallet;
-					let { network } = this;
-					console.log('');
-					console.log(`Wallet balance`+(network=='kaspa'?'':` (${Wallet.networkTypes[network].name}):`));
-					console.log('');
-					console.log(`    Available: ${this.KAS(balance.available,12)} KAS`);
-					console.log(`      Pending: ${this.KAS(balance.pending,12)} KAS`);
-					console.log(`        Total: ${this.KAS(balance.total,12)} KAS`);
-					console.log('');
+					printBalance(balance)
 					// console.log(wallet.balance);
 					this.rpc.disconnect();
 				} catch(ex) {
@@ -571,6 +575,132 @@ class KaspaWalletCli {
 					next(password);
 				}
 			})
+
+		program
+	        .command('permanently-decrypt')
+	        .description('decrypt wallet permanently')
+	        .action(async (cmd, options) => {
+	        	try {
+	        		const wallet = await this.openWallet();
+	        		storage.saveWallet(wallet.mnemonic, {encryption:"none", generator: "cli"})
+	        	}catch(ex) {
+					log.error(ex.toString());
+				}
+				this.rpc.disconnect();
+	        })
+
+		program
+	        .command('create-test-txs')
+	        .description('create test transsactions')
+	        .action(async (cmd, options) => {
+	        	try {
+	        		const wallet = await this.openWallet();
+	            	await this.networkSync();
+					this.setupLogs(wallet);
+					await wallet.sync();
+
+					//let address = 'kaspatest:qq5nca0jufeku4mn6ecv50spa3ydfw686ulfal0a56';
+					let address = wallet.receiveAddress;//'kaspatest:qzdyu998j9ngqk0c6ljhgq92kw3gwccwjg0z4sveqk'
+					let amount = 2;
+					let count = 10;
+					let txList = [];
+					let finalTxList = [];
+					let transmissionResult = [];
+
+					amount = Number(amount) * 1e8;
+
+					let createSignedTxs = async({count, address, amount})=>{
+						let error, list = []
+						do{
+							const data = await wallet.buildTransaction({
+								toAddr: address,
+								amount,
+								fee:0, calculateNetworkFee:true, inclusiveFee:0, note:''
+							}).catch(err=>{
+								let msg = err.error || err.message || err;
+								error = (msg+"").replace("Error:", '');
+								//if(/Invalid Argument/.test(error))
+								//	error = "Please provide address and amount";
+								//console.log("error", err);
+								//error = 'Unable to estimate transaction fees';//(err+"").replace("Error:", '')
+							})
+
+							if(data)
+								list.push(data);
+
+							//console.log("data", data)
+						}while(!error || list.length == count);
+						return list;
+					}
+
+					const createReSubmitableTxs = async()=>{
+						let nextTransmissionFee = 500;
+						let amt = amount + nextTransmissionFee;
+						let address = wallet.receiveAddress;
+						let list = await createSignedTxs({count:count-txList.length, address, amount:amt})
+
+						for(let tx of list){
+							let error=false;
+							let txid = await wallet.api.submitTransaction(tx.rpcTX)
+							.catch(err=>{
+								error = err;
+							})
+							//console.log("tx.rpcTX", tx.rpcTX)
+							if(!error){
+								transmissionResult.push({id:tx.id, txid});//, error})
+								txList.push(tx);
+							}
+						}
+
+						console.log("createReSubmitableTxs: txList.length, count", txList.length,  count)
+					}
+
+					const buildFinalTxList = async()=>{
+						if(finalTxList.length >= count){
+							return done();
+						}
+						let list = await createSignedTxs({
+							count:count-finalTxList.length,
+							address,
+							amount
+						})
+						finalTxList.push(...list)
+
+						console.log("buildFinalTxList: finalTxList.length, count", finalTxList.length,  count)
+						if(finalTxList.length >= count){
+							return done();
+						}
+					}
+
+					const done = ()=>{
+						log.info("txList", txList)
+						log.info("transmissionResult", transmissionResult)
+						log.info("finalTxList.length", finalTxList.length)
+						log.info("finalTxList", finalTxList)
+
+						this.rpc.disconnect();
+					}
+
+					await createReSubmitableTxs();
+					if(txList.length < count){
+						let txPromise;
+						wallet.on("balance-update", async()=>{
+							printBalance(wallet.balance)
+							if(txList.length < count){
+								if(txPromise)
+									await txPromise;
+								txPromise = createReSubmitableTxs();
+								await txPromise;
+							}else{
+								buildFinalTxList();
+							}
+						})
+					}
+					
+				} catch(ex) {
+					log.error(ex.toString());
+				}
+	        })
 
 		program.parse(process.argv);
 	}
