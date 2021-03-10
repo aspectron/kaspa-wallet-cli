@@ -688,9 +688,10 @@ class KaspaWalletCli {
 							printBalance(wallet.balance)
 							if(txList.length < count){
 								if(txPromise)
-									await txPromise;
+									return
 								txPromise = createReSubmitableTxs();
 								await txPromise;
+								txPromise = null;
 							}else{
 								buildFinalTxList();
 							}
