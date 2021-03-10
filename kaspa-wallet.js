@@ -588,10 +588,26 @@ class KaspaWalletCli {
 				}
 				this.rpc.disconnect();
 	        })
+	    program
+	        .command('compound')
+	        .description('compound transactions by re-sending funds to itself')
+	        .action(async (cmd, options) => {
+	        	try {
+	        		const wallet = await this.openWallet();
+	        		await this.networkSync();
+					this.setupLogs(wallet);
+					await wallet.sync();
+	        		let response = await wallet.compoundUTXOs()
+	        		log.info("compound transactions response", response)
+	        	}catch(ex) {
+					log.error(ex.toString());
+				}
+				this.rpc.disconnect();
+	        })
 
 		program
 	        .command('create-test-txs')
-	        .description('create test transsactions')
+	        .description('create test transactions')
 	        .action(async (cmd, options) => {
 	        	try {
 	        		const wallet = await this.openWallet();
