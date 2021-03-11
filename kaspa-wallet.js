@@ -4,7 +4,7 @@ const cliProgress = require('cli-progress');
 const { Command } = require('commander');
 const { Wallet, initKaspaFramework, log : walletLogger, Storage, FlowLogger} = require('@kaspa/wallet');
 const { RPC } = require('@kaspa/grpc-node');
-const { delay, dpc, debounce } = require('@aspectron/flow-async');
+const { delay, dpc, debounce, clearDPC } = require('@aspectron/flow-async');
 const Decimal = require('decimal.js');
 const fs = require("fs");
 const path = require("path");
@@ -634,17 +634,31 @@ class KaspaWalletCli {
 					let transmissionResult = [];
 					const changeAddrOverride = wallet.addressManager.changeAddress.atIndex[0];
 
-					console.log("changeAddrOverride:"+changeAddrOverride)
+					log.info("changeAddrOverride:"+changeAddrOverride)
 
 					let halfAmount = Number(amount/2) * 1e8;
 					let count2X = count*2
 					amount = Number(amount) * 1e8;
-					
+					let progress = null;
+					const barsize = (process.stdout.columns || 120) - 80;
+					const hideCursor = true;
+					const clearOnComplete = false;
 
-					let createSignedTxs = async({count, address, amount})=>{
-						console.log("createSignedTxs started", {count, address, amount})
-						let error, list = []
+					let createSignedTxs = async({title="TO-ITSELF", count, address, amount})=>{
+						log.info(`(${title}) creating signed txs, address:${address}, amount:${amount}`);
+						if(progress)
+							progress.stop();
+						progress = new cliProgress.SingleBar({
+							format: `CreateSignedTxs (${title}) [{bar}] ETA: {eta}s | {value} / {total} | Elapsed: {duration_formatted}`,
+							hideCursor, clearOnComplete, barsize
+						}, cliProgress.Presets.rect);
+						progress.start(count, 0, { i : '...', count: '...' });
+
+						//console.log("createSignedTxs started", {count, address, amount})
+						let error, list = [], i=0, amounts = [], totalAmount = 0;
+						const p = 100/count;
 						do{
+							
 							const data = await wallet.buildTransaction({
 								toAddr: address,
 								changeAddrOverride,
@@ -655,17 +669,25 @@ class KaspaWalletCli {
 								error = (msg+"").replace("Error:", '');
 								//if(/Invalid Argument/.test(error))
 								//	error = "Please provide address and amount";
-								console.log("buildTransaction:error", error);
+								//console.log("buildTransaction:error", error);
 								//error = 'Unable to estimate transaction fees';//(err+"").replace("Error:", '')
 							})
 
-							if(data)
+							if(data){
+								let amountAvailable = data.utxos.map(utxo=>utxo.satoshis).reduce((a,b)=>a+b,0);
+								totalAmount += amountAvailable;
+								amounts.push(amount);
 								list.push(data);
-
+							}
 							//console.log("data", data)
+							//++i;
+							//progress.update(i, { i, count });
+							progress.increment();
 						}while(!(error || list.length >= count));
 
-						console.log("createSignedTxs finished", {count, address, amount}, "list.length:"+list.length)
+						//if(list.length >= count)
+							progress.stop();
+						//console.log("createSignedTxs finished", "count:"+count, "address:"+address, "amount:"+amount, "list.length:"+list.length)
 						return list;
 					}
 
@@ -708,7 +730,7 @@ class KaspaWalletCli {
 							}
 						}
 
-						console.log("createReSubmitableTxs: txListLength, count", txListLength,  count2X)
+						//console.log("createReSubmitableTxs: txListLength, count", txListLength,  count2X)
 					}
 
 					const buildFinalTxList = async()=>{
@@ -716,6 +738,7 @@ class KaspaWalletCli {
 							return done();
 						}
 						let list = await createSignedTxs({
+							title:"FinalTx",
 							count:count-finalTxList.length,
 							address,
 							amount
@@ -726,7 +749,7 @@ class KaspaWalletCli {
 
 					const pushToFinalList = (...txs)=>{
 						finalTxList.push(...txs)
-						console.log("buildFinalTxList: finalTxList.length, count", finalTxList.length,  count)
+						//console.log("buildFinalTxList: finalTxList.length, count", finalTxList.length,  count)
 						debounce("flush", 500, flushTxsToFile)
 						if(finalTxList.length >= count){
 							return done();
@@ -747,12 +770,13 @@ class KaspaWalletCli {
 
 					const done = ()=>{
 						//log.info("txList", txList)
-						log.info("transmissionResult", transmissionResult)
+						//log.info("transmissionResult", transmissionResult)
 						//log.info("finalTxList.length", finalTxList.length)
 						//log.info("finalTxList", finalTxList)
 						flushTxsToFile();
 
 						//submitTxs(txs, ()=>{
+							clearDpc();
 							this.rpcDisconnect();
 						//});
 					}
@@ -782,9 +806,17 @@ class KaspaWalletCli {
 					}
 					//debounce("printBalance", 5000, e=>printBalance(wallet.balance))
 					let timeTick = false;
+					let dpcId;
 					const updateTimeTick = ()=>{
 						timeTick = true;
-						dpc(1000, updateTimeTick);
+						dpcId = dpc(1000, updateTimeTick);
+					}
+
+					const clearDpc = ()=>{
+						if(dpcId){
+							clearDPC(dpcId);
+							dpcId = null;
+						}
 					}
 
 					updateTimeTick();
@@ -796,6 +828,7 @@ class KaspaWalletCli {
 						console.log(`tx file loaded: ${txs.length} txs, ${utxoIds.length} utxos`)
 						wallet.utxoSet.inUse.push(...utxoIds);
 						//submitTxs(txs, ()=>{
+							clearDpc();
 							this.rpcDisconnect();
 						//});
 					}
