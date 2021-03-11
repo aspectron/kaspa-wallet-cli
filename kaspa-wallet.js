@@ -4,9 +4,10 @@ const cliProgress = require('cli-progress');
 const { Command } = require('commander');
 const { Wallet, initKaspaFramework, log : walletLogger, Storage, FlowLogger} = require('@kaspa/wallet');
 const { RPC } = require('@kaspa/grpc-node');
-const { delay } = require('@aspectron/flow-async');
+const { delay, dpc, debounce } = require('@aspectron/flow-async');
 const Decimal = require('decimal.js');
 const fs = require("fs");
+const path = require("path");
 const ReadLine = require('readline');
 const Writable = require('stream').Writable;
 const qrcode = require('qrcode-terminal');
@@ -613,23 +614,40 @@ class KaspaWalletCli {
 	        		const wallet = await this.openWallet();
 	            	await this.networkSync();
 					this.setupLogs(wallet);
+					wallet.setLogLevel('none');
 					await wallet.sync();
+					const isOurChange = wallet.addressManager.isOurChange.bind(wallet.addressManager)
+					wallet.addressManager.isOurChange = (address)=>{
+						if(address == changeAddrOverride)
+							return false;
+						return isOurChange(address);
+					}
 
 					//let address = 'kaspatest:qq5nca0jufeku4mn6ecv50spa3ydfw686ulfal0a56';
-					let address = wallet.receiveAddress;//'kaspatest:qzdyu998j9ngqk0c6ljhgq92kw3gwccwjg0z4sveqk'
-					let amount = 2;
-					let count = 10;
+					//let address = wallet.receiveAddress;//'kaspatest:qzdyu998j9ngqk0c6ljhgq92kw3gwccwjg0z4sveqk'
+					let address = "kaspatest:qqgklkypj97yvz52fylh3pfs3qmv9zq245nhu3xfsu"
+					let amount = 0.01;
+					let count = 1000;
 					let txList = [];
+					let txListLength = 0;
 					let finalTxList = [];
 					let transmissionResult = [];
+					const changeAddrOverride = wallet.addressManager.changeAddress.atIndex[0];
 
+					console.log("changeAddrOverride:"+changeAddrOverride)
+
+					let halfAmount = Number(amount/2) * 1e8;
+					let count2X = count*2
 					amount = Number(amount) * 1e8;
+					
 
 					let createSignedTxs = async({count, address, amount})=>{
+						console.log("createSignedTxs started", {count, address, amount})
 						let error, list = []
 						do{
 							const data = await wallet.buildTransaction({
 								toAddr: address,
+								changeAddrOverride,
 								amount,
 								fee:0, calculateNetworkFee:true, inclusiveFee:0, note:''
 							}).catch(err=>{
@@ -637,7 +655,7 @@ class KaspaWalletCli {
 								error = (msg+"").replace("Error:", '');
 								//if(/Invalid Argument/.test(error))
 								//	error = "Please provide address and amount";
-								//console.log("error", err);
+								console.log("buildTransaction:error", error);
 								//error = 'Unable to estimate transaction fees';//(err+"").replace("Error:", '')
 							})
 
@@ -645,17 +663,36 @@ class KaspaWalletCli {
 								list.push(data);
 
 							//console.log("data", data)
-						}while(!error || list.length == count);
+						}while(!(error || list.length >= count));
+
+						console.log("createSignedTxs finished", {count, address, amount}, "list.length:"+list.length)
 						return list;
 					}
 
 					const createReSubmitableTxs = async()=>{
-						let nextTransmissionFee = 500;
-						let amt = amount + nextTransmissionFee;
-						let address = wallet.receiveAddress;
-						let list = await createSignedTxs({count:count-txList.length, address, amount:amt})
+						let requiredTXCount = count2X-txListLength;
+						if(requiredTXCount<=0)
+							return console.log("createReSubmitableTxs loop finished: txListLength, count", txListLength,  count2X)
+
+						let nextTransmissionFee = 700;
+						let amt = halfAmount + nextTransmissionFee;
+						let address = changeAddrOverride;//wallet.receiveAddress;
+
+						let list = await createSignedTxs({count:requiredTXCount, address, amount:amt})
 
 						for(let tx of list){
+							/*//if inputs.amount ~= amt, dont break it into more small tx
+							let amountAvailable = tx.utxos.map(utxo=>utxo.satoshis).reduce((a,b)=>a+b,0);
+							console.log("amountAvailable", amountAvailable, amt+1000)
+							if(amountAvailable <= amt+1000){
+								pushToFinalList(tx);
+								txListLength++;
+								continue;
+							}
+							*/
+
+
+
 							let error=false;
 							let txid = await wallet.api.submitTransaction(tx.rpcTX)
 							.catch(err=>{
@@ -665,10 +702,13 @@ class KaspaWalletCli {
 							if(!error){
 								transmissionResult.push({id:tx.id, txid});//, error})
 								txList.push(tx);
+								txListLength++;
+							}else{
+								console.error("submitTransaction:", error.error||error.message||error)
 							}
 						}
 
-						console.log("createReSubmitableTxs: txList.length, count", txList.length,  count)
+						console.log("createReSubmitableTxs: txListLength, count", txListLength,  count2X)
 					}
 
 					const buildFinalTxList = async()=>{
@@ -680,38 +720,104 @@ class KaspaWalletCli {
 							address,
 							amount
 						})
-						finalTxList.push(...list)
+						
+						pushToFinalList(...list)
+					}
 
+					const pushToFinalList = (...txs)=>{
+						finalTxList.push(...txs)
 						console.log("buildFinalTxList: finalTxList.length, count", finalTxList.length,  count)
+						debounce("flush", 500, flushTxsToFile)
 						if(finalTxList.length >= count){
 							return done();
 						}
 					}
 
-					const done = ()=>{
-						log.info("txList", txList)
-						log.info("transmissionResult", transmissionResult)
-						log.info("finalTxList.length", finalTxList.length)
-						log.info("finalTxList", finalTxList)
-
-						this.rpc.disconnect();
-					}
-
-					await createReSubmitableTxs();
-					if(txList.length < count){
-						let txPromise;
-						wallet.on("balance-update", async()=>{
-							printBalance(wallet.balance)
-							if(txList.length < count){
-								if(txPromise)
-									return
-								txPromise = createReSubmitableTxs();
-								await txPromise;
-								txPromise = null;
-							}else{
-								buildFinalTxList();
+					const flushTxsToFile = ()=>{
+						const utxoIds = [];
+						const txs = finalTxList.map(tx=>{
+							utxoIds.push(...tx.utxoIds)
+							return {
+								id:tx.id,
+								rpcTX:tx.rpcTX
 							}
 						})
+						fs.writeFileSync(txFilePath, JSON.stringify({txs, utxoIds}, null, "\t"));
+					}
+
+					const done = ()=>{
+						//log.info("txList", txList)
+						log.info("transmissionResult", transmissionResult)
+						//log.info("finalTxList.length", finalTxList.length)
+						//log.info("finalTxList", finalTxList)
+						flushTxsToFile();
+
+						//submitTxs(txs, ()=>{
+							this.rpcDisconnect();
+						//});
+					}
+
+					const submitTxs =(txs, doneCB)=>{
+						for(let i=0;i<10;i++)
+							log.info("####################################################################")
+
+						let result = [];
+						const printResult = (r)=>{
+							result.push(r)
+							if(result.length == txs.length){
+								log.info("TX submit result", result)
+								doneCB()
+							}
+						}
+						
+						txs.map(tx=>{
+							wallet.api.submitTransaction(tx.rpcTX)
+							.then(txid=>{
+								printResult({id:tx.id, txid});
+							})
+							.catch(err=>{
+								printResult({id:tx.id, error:err.error||err.message||err});
+							})
+						})
+					}
+					//debounce("printBalance", 5000, e=>printBalance(wallet.balance))
+					let timeTick = false;
+					const updateTimeTick = ()=>{
+						timeTick = true;
+						dpc(1000, updateTimeTick);
+					}
+
+					updateTimeTick();
+
+					const txFilePath = path.join(__dirname, "_txs_.json");
+					if(0 && fs.existsSync(txFilePath)){
+						let info = fs.readFileSync(txFilePath)+"";
+						let {txs, utxoIds} = JSON.parse(info);
+						console.log(`tx file loaded: ${txs.length} txs, ${utxoIds.length} utxos`)
+						wallet.utxoSet.inUse.push(...utxoIds);
+						//submitTxs(txs, ()=>{
+							this.rpcDisconnect();
+						//});
+					}
+					await createReSubmitableTxs();
+					if(txListLength < count2X){
+						let txPromise;
+						wallet.on("balance-update", async()=>{
+							if(timeTick%5 == 0){
+								printBalance(wallet.balance)
+							}
+							if(txPromise)
+								return
+							if(txListLength < count2X){
+								txPromise = createReSubmitableTxs();
+							}else{
+								txPromise = buildFinalTxList();
+							}
+							await txPromise;
+							txPromise = null;
+						})
+					}else{
+						buildFinalTxList();
 					}
 					
 				} catch(ex) {
@@ -720,6 +826,12 @@ class KaspaWalletCli {
 	        })
 
 		program.parse(process.argv);
+	}
+
+	rpcDisconnect(){
+		dpc(1000, ()=>{
+			this.rpc.disconnect()
+		})
 	}
 
 
