@@ -619,7 +619,8 @@ class KaspaWalletCli {
 
 					//let address = 'kaspatest:qq5nca0jufeku4mn6ecv50spa3ydfw686ulfal0a56';
 					//let address = wallet.receiveAddress;//'kaspatest:qzdyu998j9ngqk0c6ljhgq92kw3gwccwjg0z4sveqk'
-					let address = "kaspatest:qqgklkypj97yvz52fylh3pfs3qmv9zq245nhu3xfsu"
+					//let address = "kaspatest:qqgklkypj97yvz52fylh3pfs3qmv9zq245nhu3xfsu"
+					let address = wallet.addressManager.receiveAddress.atIndex[0];
 					let amount = 0.01;
 					let count = 1000;
 					return this.createTestTransactions({
@@ -868,8 +869,8 @@ class KaspaWalletCli {
 		}
 		*/
 
-		count = 10000;
-		address = wallet.addressManager.receiveAddress.atIndex[0];
+		//count = 1000;
+		//address = wallet.addressManager.receiveAddress.atIndex[0];
 		amount = Number(amount) * 1e8;
 		
 		const signedTxs = [];
