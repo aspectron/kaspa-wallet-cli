@@ -616,24 +616,24 @@ class KaspaWalletCli {
 					this.setupLogs(wallet);
 					wallet.setLogLevel('none');
 					await wallet.sync();
-					const isOurChange = wallet.addressManager.isOurChange.bind(wallet.addressManager)
-					wallet.addressManager.isOurChange = (address)=>{
-						if(address == changeAddrOverride)
-							return false;
-						return isOurChange(address);
-					}
 
 					//let address = 'kaspatest:qq5nca0jufeku4mn6ecv50spa3ydfw686ulfal0a56';
 					//let address = wallet.receiveAddress;//'kaspatest:qzdyu998j9ngqk0c6ljhgq92kw3gwccwjg0z4sveqk'
 					let address = "kaspatest:qqgklkypj97yvz52fylh3pfs3qmv9zq245nhu3xfsu"
 					let amount = 0.01;
 					let count = 1000;
+					return this.createTestTransactions({
+						wallet, address, amount, count
+					})
+
+					/*
 					let txList = [];
 					let txListLength = 0;
 					let finalTxList = [];
 					let transmissionResult = [];
 					const changeAddrOverride = wallet.addressManager.changeAddress.atIndex[0];
 
+					
 					log.info("changeAddrOverride:"+changeAddrOverride)
 
 					let halfAmount = Number(amount/2) * 1e8;
@@ -703,15 +703,7 @@ class KaspaWalletCli {
 						let list = await createSignedTxs({count:requiredTXCount, address, amount:amt})
 
 						for(let tx of list){
-							/*//if inputs.amount ~= amt, dont break it into more small tx
-							let amountAvailable = tx.utxos.map(utxo=>utxo.satoshis).reduce((a,b)=>a+b,0);
-							console.log("amountAvailable", amountAvailable, amt+1000)
-							if(amountAvailable <= amt+1000){
-								pushToFinalList(tx);
-								txListLength++;
-								continue;
-							}
-							*/
+							
 
 
 
@@ -852,6 +844,7 @@ class KaspaWalletCli {
 					}else{
 						buildFinalTxList();
 					}
+					*/
 					
 				} catch(ex) {
 					log.error(ex.toString());
@@ -859,6 +852,352 @@ class KaspaWalletCli {
 	        })
 
 		program.parse(process.argv);
+	}
+
+	createTestTransactions({wallet, address, count, amount}){
+		/*
+		if(wallet._isOurChangeOverride){
+			wallet._isOurChangeOverride = true;
+			const changeAddrOverride = wallet.addressManager.changeAddress.atIndex[0];
+			const isOurChange = wallet.addressManager.isOurChange.bind(wallet.addressManager)
+			wallet.addressManager.isOurChange = (address)=>{
+				if(address == changeAddrOverride)
+					return false;
+				return isOurChange(address);
+			}
+		}
+		*/
+
+		count = 10000;
+		address = wallet.addressManager.receiveAddress.atIndex[0];
+		amount = Number(amount) * 1e8;
+		
+		const signedTxs = [];
+
+
+
+		const txFilePath = path.join(__dirname, "_txs_.json");
+		if(fs.existsSync(txFilePath)){
+			let info = fs.readFileSync(txFilePath)+"";
+			let {txs} = JSON.parse(info);
+			let utxoIds = [];
+			txs.map(tx=>{
+				utxoIds.push(...tx.utxoIds)
+			})
+			log.info(`tx file loaded: ${txs.length} txs, ${utxoIds.length} utxos`)
+			wallet.utxoSet.inUse.push(...utxoIds);
+			signedTxs.push(...txs)
+		}
+
+
+		const submitTxResult = [];
+		log.info("amount", amount)
+
+		const barsize = 50;//(process.stdout.columns || 120) - 100;
+		const hideCursor = false;
+		const clearOnComplete = false;
+		const progress = new cliProgress.SingleBar({
+			format: `CreatingTXs [{bar}] `+
+					`ETA: {eta}s | {value} / {total} | Eld: {duration_formatted} | `+
+					`{status}`,
+			hideCursor, clearOnComplete, barsize
+		}, cliProgress.Presets.rect);
+
+		let progressStoped = true;
+		const stopProgress = ()=>{
+			progressStoped = true;
+			progress.stop()
+		}
+		const startProgress = (total, start, opt)=>{
+			if(progressStoped){
+				progressStoped = false;
+				progress.start(total, start, opt)
+			}
+			else
+				progress.update(start, opt)
+		}
+		const flushTxsToFile = ()=>{
+			fs.writeFileSync(txFilePath, JSON.stringify({txs:signedTxs}, null, "\t"));
+		}
+
+		startProgress(count, 0, {status:''});
+
+
+
+		let submitTxMap = new Map();
+		let utxoId2TXIdMap = new Map();
+		const submitTx = async (rpcTX, id)=>{
+			let error=false;
+			submitTxMap.set(id, rpcTX.transaction.outputs.length-1);
+			let txid = await wallet.api.submitTransaction(rpcTX)
+			.catch(err=>{
+				error = err.error || err.message
+				_log("\nerror", err)
+			})
+			if(error){
+				submitTxMap.delete(id);
+			}else{
+				rpcTX.transaction.outputs.map((o, index)=>{
+					let txoId = txid+index;
+					utxoId2TXIdMap.set(txoId, id);
+				})
+			}
+			submitTxResult.push({txid, error})
+			progress.update(signedTxs.length, {status: txid? "txid:"+txid: error})
+			submitTxMap.size && run()
+		}
+
+		let stoped = false;
+		const done = ()=>{
+			if(stoped)
+				return
+			stoped = true;
+			stopProgress();
+			//log.info('')
+			//log.info("submitTxResult", submitTxResult)
+			log.info("signedTxs", signedTxs.length)
+			this.rpcDisconnect();
+			//process.exit(0)
+		}
+
+		let running = 0;
+		let status = '';
+		const createTx = ()=>{
+			if(stoped)
+				return
+			const nums = count-signedTxs.length;
+			startProgress(count, signedTxs.length, {status});
+			this._createTestTransactions({
+				wallet, address, count:nums, totalCount:count,
+				amount,
+				signedTxs, _log
+			}, ({rpcTX, utxoIds, to, id})=>{
+				
+				if(to.length > 1){
+					progress.update(signedTxs.length, {status: 'submiting TX'})
+					submitTx(rpcTX, id);
+				}else{
+					signedTxs.push({rpcTX, id, utxoIds})
+					debounce("flushTxsToFile", 200, flushTxsToFile);
+					progress.increment();
+					if(signedTxs.length >= count){
+						done()
+					}
+				}
+			});
+			let outCount = 0;
+			submitTxMap.forEach((count)=>{
+				outCount += count;
+			})
+			status = "waitingTxs:"+submitTxMap.size+"("+outCount+") isRunning:"+running;
+			let filled = signedTxs.length >= count
+			if( !filled && running > 1)
+				return createTx();
+			running = 0;
+			dpc(1, ()=>{
+				let {utxos} = wallet.utxoSet.collectUtxos(Number.MAX_SAFE_INTEGER)
+				let pendingUtxoCount = wallet.utxoSet.utxos.pending.size
+				if(filled || (!submitTxMap.size && running<1 && !pendingUtxoCount && !utxos.length) ){
+					_log("calling done.........")
+					done();
+				}else{
+					//_log("utxos:"+utxos.length+", running:"+running)
+					run();
+				}
+			})
+		}
+
+		const run = ()=>{
+			if(running){
+				running++;
+				return
+			}
+			running = 1;
+			createTx();
+		}
+
+		const _log = (...args)=>{
+			if(stoped)
+				return
+			stopProgress();
+			//log.info('');
+			log.info(...args);
+			startProgress(count, signedTxs.length, {status:''});
+		}
+
+		run();
+
+		if(signedTxs.length < count){
+			wallet.on("balance-update", ()=>{
+				debounce("submitTxMapsize", 500, ()=>{
+					if(submitTxMap.size){
+						let before = submitTxMap.size;
+						let txId, utxoID, utxos = wallet.utxoSet.utxos.confirmed;
+						utxos.forEach(utxo=>{
+							utxoID = utxo.txId + utxo.outputIndex;
+							txId = utxoId2TXIdMap.get(utxoID)
+							if(txId)
+								submitTxMap.delete(txId);
+						})
+						_log("waitingTxs update", before+"=>"+submitTxMap.size)
+					}
+
+					run();
+				})
+				run();
+			})
+		}
+
+	}
+	/*
+	BYTES : 2+8+151+8+43+8+20+8+8+32
+	Txn Version: 2
+	number of inputs: 8
+	INPUT::::: 151
+		previus tx ID:32
+		index: 4
+		length of signature script: 8
+		SignatureScript length: 99
+		sequence: 8
+
+	number of outputs: 8
+	OUTPUT:::: 43
+		value: 8
+		Version: 2
+		length of script public key: 8
+		ScriptPublicKey.Script: 25
+	lock time: 8
+	subnetworkId: 20
+	gas:8
+	length of the payload: 8
+	Payload: 
+	payload hash: 32
+
+	*/
+
+	_createTestTransactions({wallet, _log, address, count, totalCount, amount, signedTxs, maxFee=6000}, CB){
+		if(count<1)
+			return
+		const {kaspacore} = Wallet;
+		const changeAddr = wallet.addressManager.changeAddress.atIndex[0];
+		let {utxos, utxoIds} = wallet.utxoSet.collectUtxos(Number.MAX_SAFE_INTEGER)
+		//utxos.map(u=>{
+		//	u.m = Math.round(u.satoshis % amt);
+		//})
+		utxos = utxos.sort((a, b)=>{
+			return a.satoshis-b.satoshis;
+		})
+		const baseFee = 94;
+		const feePerOutput = 43;
+		const feePerInput = 151;
+
+		const createToFields = ({inputCount, totalAmount})=>{
+			const inputFee = inputCount * feePerInput;
+			let fee = baseFee+inputFee+feePerOutput // base + inputs + change output fee
+			const oneOutputAmount = amount+feePerOutput;
+
+			let to = [];
+			let total = fee;
+			do{
+				to.push({address, amount})
+				fee += feePerOutput;
+				total += oneOutputAmount;
+			}while(fee<maxFee && total < totalAmount-oneOutputAmount);
+
+			if(to.length>1){//if there are more outputs send it to itself
+				to.map(to=>{
+					to.address = changeAddr
+				})
+			}
+			return {to, fee};
+		}
+
+		const createTx = ({utxos, total})=>{
+			
+			const utxoIds = [];
+			const privKeys = utxos.reduce((prev, cur) => {
+				const utxoId = cur.txId + cur.outputIndex;
+				utxoIds.push(utxoId);
+				return [wallet.addressManager.all[String(cur.address)], ...prev];
+			}, []);
+
+			const {to, fee} = createToFields({inputCount:utxos.length, totalAmount:total})
+
+
+			const tx = new kaspacore.Transaction()
+				.from(utxos)
+				.to(to)
+				.setVersion(0)
+				.fee(fee)
+				.change(changeAddr)
+			tx.sign(privKeys, kaspacore.crypto.Signature.SIGHASH_ALL, 'schnorr');
+
+			const {nLockTime: lockTime, version, id } = tx;
+			const inputs = tx.inputs.map(input => {
+				//_log("input.script.toBuffer()", input.script.toBuffer().length)
+				return {
+					previousOutpoint: {
+						transactionId: input.prevTxId.toString("hex"),
+						index: input.outputIndex
+					},
+					signatureScript: input.script.toBuffer().toString("hex"),
+					sequence: input.sequenceNumber
+				};
+			})
+			const outputs = tx.outputs.map(output => {
+				//_log("output.script.toBuffer()", output.script.toBuffer().length)
+				return {
+					amount: output.satoshis,
+					scriptPublicKey: {
+						scriptPublicKey: output.script.toBuffer().toString("hex"),
+						version: 0
+					}
+				}
+			})
+
+			const rpcTX = {
+				transaction: {
+					version,
+					inputs,
+					outputs,
+					lockTime,
+					payloadHash: '0000000000000000000000000000000000000000000000000000000000000000',
+					subnetworkId: wallet.subnetworkId,
+					fee
+				}
+			}
+
+			wallet.utxoSet.inUse.push(...utxoIds)
+
+			//_log("createTx", utxos.length, fee, total, to.length)
+			CB({rpcTX, utxoIds, id, to})
+		}
+
+		let satoshis = 0;
+		let txUTXOs = [];
+		let fee = baseFee;
+		const amountPlusFee = amount+fee;
+		let _amountPlusFee = amountPlusFee;
+		//_log("___utxos__ :"+utxos.length)
+		for (const u of utxos){
+			satoshis += u.satoshis;
+			txUTXOs.push(u);
+			if(satoshis/_amountPlusFee >= 1){
+				//_log("_amountPlusFee1111", txUTXOs.length, satoshis, amountPlusFee)
+				createTx({utxos:txUTXOs, fee, total:satoshis})
+				_amountPlusFee = amountPlusFee;
+				fee = baseFee;
+				satoshis = 0;
+				txUTXOs = [];
+			}else{
+				_amountPlusFee += feePerInput;
+				fee += feePerInput;
+				//_log("_amountPlusFee", txUTXOs.length, satoshis, amountPlusFee)
+			}
+			if(signedTxs.length>=totalCount)
+				break;
+			//console.log("u.satoshis", u.n, u.satoshis)
+		}
 	}
 
 	rpcDisconnect(){
