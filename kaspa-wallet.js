@@ -59,6 +59,7 @@ class KaspaWalletCli {
 
 	constructor() {
 		this.log = 'info';
+		this.testTxsFilePath = path.join(__dirname, "_txs_.json");
 	}
 
 	async init() {
@@ -606,10 +607,48 @@ class KaspaWalletCli {
 				this.rpc.disconnect();
 	        })
 
-		program
-	        .command('create-test-txs')
-	        .description('create test transactions')
+
+	    program
+	        .command('list-test-txs')
+	        .description('list test transactions from tx storage')
 	        .action(async (cmd, options) => {
+	        	try {
+					let {txs} = this.getTestTransactions();
+					log.info(`Transaction ${txs.length}`, txs)
+				} catch(ex) {
+					log.error(ex.toString());
+				}
+			})
+		program
+	        .command('post-test-txs')
+	        .description('post test transactions')
+	        .action(async (cmd, options) => {
+	        	try {
+	        		const wallet = await this.openWallet();
+	            	await this.networkSync();
+					this.setupLogs(wallet);
+					wallet.setLogLevel('none');
+					this.postTestTransactions({wallet});
+				} catch(ex) {
+					log.error(ex.toString());
+				}
+			})
+
+		program
+	        .command('create-test-txs [count, [amount]]')
+	        .description('create test transactions')
+	        .option('--amount <amount>','amount of each transaction')
+	        .option('--count <count>','number of transactions')
+	        .action(async (count, amount, options) => {
+	        	//let {amount=0.01, count=1000} = cmd||{};
+	        	let {amount:a=0.01, count:c=1000} = options;
+	        	if(amount === undefined)
+	        		amount = parseFloat(a)
+	        	if(count === undefined)
+	        		count = parseInt(c, 10)
+
+	        	//console.log("amount", amount, count, options)
+	        	//return
 	        	try {
 	        		const wallet = await this.openWallet();
 	            	await this.networkSync();
@@ -621,8 +660,6 @@ class KaspaWalletCli {
 					//let address = wallet.receiveAddress;//'kaspatest:qzdyu998j9ngqk0c6ljhgq92kw3gwccwjg0z4sveqk'
 					//let address = "kaspatest:qqgklkypj97yvz52fylh3pfs3qmv9zq245nhu3xfsu"
 					let address = wallet.addressManager.receiveAddress.atIndex[0];
-					let amount = 0.01;
-					let count = 1000;
 					return this.createTestTransactions({
 						wallet, address, amount, count
 					})
@@ -855,7 +892,162 @@ class KaspaWalletCli {
 		program.parse(process.argv);
 	}
 
-	createTestTransactions({wallet, address, count, amount}){
+	getTestTransactions(){
+		let utxoIds = [], txs=[];
+		const txFilePath = this.testTxsFilePath;
+		if(fs.existsSync(txFilePath)){
+			let info = fs.readFileSync(txFilePath)+"";
+			let {txs:list} = JSON.parse(info);
+			list.map(tx=>{
+				utxoIds.push(...tx.utxoIds)
+			})
+			txs = list;
+			log.info(`Tx file loaded: ${txs.length} txs, ${utxoIds.length} utxos`)
+		}
+
+		return {txs, utxoIds};
+	}
+
+	saveTestTransactions(txs){
+		fs.writeFileSync(this.testTxsFilePath, JSON.stringify({txs}, null, "\t"));
+	}
+
+	postTestTransactions({wallet, postType='chunk-n-direct', chunkSize=50}, CB){
+		const barsize = 50;//(process.stdout.columns || 120) - 100;
+		const hideCursor = false;
+		const clearOnComplete = false;
+		const progress = new cliProgress.SingleBar({
+			format: `PostTXs [{bar}] `+
+					`ETA: {eta}s | {value} / {total} | Eld: {duration_formatted} | `+
+					`{status}`,
+			hideCursor, clearOnComplete, barsize
+		}, cliProgress.Presets.rect);
+		let progressStoped = true;
+		const stopProgress = ()=>{
+			progressStoped = true;
+			progress.stop()
+		}
+		const startProgress = (total, start, opt)=>{
+			if(progressStoped){
+				progressStoped = false;
+				progress.start(total, start, opt)
+			}
+			else
+				progress.update(start, opt)
+		}
+
+		let {txs:signedTxs}= this.getTestTransactions();
+
+		let ts = Date.now();
+		let totalTxs = signedTxs.length
+		log.info(`Sending ${totalTxs} transactions ....`)
+		let result = [];
+		let errors = [];
+		let errors2 = [];
+		let txWithErrors = [];
+		let finished = 0;
+
+		startProgress(totalTxs, 0, {status:''});
+
+		const onTxError = (err)=>{
+			let m = err.message;
+			errors.push(m)
+			if(!m.includes("already spent") && !m.includes("fully-spent transaction")){
+				txWithErrors.push(tx);
+				errors2.push(m);
+			}
+		}
+
+		const submitTx = (tx, next)=>{
+			return wallet.api.submitTransaction(tx.rpcTX)
+			.then(txid=>{
+				finished++;
+				progress.update(finished)
+				result.push(txid)
+				next?.();
+			})
+			.catch(err=>{
+				finished++;
+				progress.update(finished)
+				onTxError(err)
+				next?.();
+			})
+		}
+
+		const postDirect = (txs)=>{
+			let length = txs.length, count=0;
+			return new Promise((resolve)=>{
+				txs.map(tx=>{
+					submitTx(tx, ()=>{
+						if(++count >= length)
+							resolve();
+					})
+				})
+			})
+		}
+
+		const postDelayed = (txs)=>{
+			let tx;
+			return new Promise(async(resolve)=>{
+				tx = txs.shift();
+				while(tx){
+					await submitTx(tx)
+					tx = txs.shift();
+					await delay(256);
+				}
+
+				resolve();
+			})
+		}
+
+		const showResult = ()=>{
+			if(result.length + errors.length < totalTxs)
+				return
+			log.info(`Finished in ${((Date.now()-ts)/1000).toFixed(2)}sec.`)
+			log.info(`Posted: ${result.length}`)
+			log.info(`Errors: ${errors2.length}`, errors2)
+			log.info(`ALL Errors: ${errors.length}`, errors)
+			
+			signedTxs = txWithErrors;
+			this.saveTestTransactions(signedTxs);
+			this.rpcDisconnect();
+			CB?.();
+		}
+
+
+		switch(postType){
+			case 'chunk-n-direct':
+				let chunks = [];
+				while(signedTxs.length)
+					chunks.push(...signedTxs.splice(0, chunkSize))
+
+				let method = postDelayed;
+				const post = ()=>{
+					method = method == postDelayed?  postDirect : postDelayed
+					let chunk = chunks.shift();
+					console.log("chunk", chunk.length)
+					if(chunk && chunk.length){
+						method(chunk).then(()=>{
+							dpc(post)
+						});
+					}else{
+						showResult()
+					}
+				}
+
+				post();
+			break;
+			default:
+			case 'default':
+				log.info("Posting all in series");
+				postDirect(signedTxs).then(showResult);
+			break;
+		}
+
+		
+	}
+
+	createTestTransactions({wallet, address, count, amount, send}){
 		/*
 		if(wallet._isOurChangeOverride){
 			wallet._isOurChangeOverride = true;
@@ -868,31 +1060,26 @@ class KaspaWalletCli {
 			}
 		}
 		*/
-
-		//count = 1000;
-		//address = wallet.addressManager.receiveAddress.atIndex[0];
-		amount = Number(amount) * 1e8;
 		
-		const signedTxs = [];
+		let signedTxs = [];
 
+		const {utxoIds, txs} = this.getTestTransactions();
+		wallet.utxoSet.inUse.push(...utxoIds);
+		signedTxs.push(...txs)
 
-
-		const txFilePath = path.join(__dirname, "_txs_.json");
-		if(fs.existsSync(txFilePath)){
-			let info = fs.readFileSync(txFilePath)+"";
-			let {txs} = JSON.parse(info);
-			let utxoIds = [];
-			txs.map(tx=>{
-				utxoIds.push(...tx.utxoIds)
-			})
-			log.info(`tx file loaded: ${txs.length} txs, ${utxoIds.length} utxos`)
-			wallet.utxoSet.inUse.push(...utxoIds);
-			signedTxs.push(...txs)
+		if(signedTxs.length > count){
+			log.info(`Number of stored transactions ${signedTxs.length} is larger than ${count}`)
+			return this.rpcDisconnect();
 		}
 
+		log.info(`Creating ${count-signedTxs.length} (${count} - ${signedTxs.length}) transactions with ${amount}KAS each.`)
+
+		amount = Number(amount) * 1e8;
+		const flushTxsToFile = ()=>{
+			this.saveTestTransactions(signedTxs);
+		}
 
 		const submitTxResult = [];
-		log.info("amount", amount)
 
 		const barsize = 50;//(process.stdout.columns || 120) - 100;
 		const hideCursor = false;
@@ -917,9 +1104,7 @@ class KaspaWalletCli {
 			else
 				progress.update(start, opt)
 		}
-		const flushTxsToFile = ()=>{
-			fs.writeFileSync(txFilePath, JSON.stringify({txs:signedTxs}, null, "\t"));
-		}
+		
 
 		startProgress(count, 0, {status:''});
 
@@ -968,7 +1153,7 @@ class KaspaWalletCli {
 				return
 			const nums = count-signedTxs.length;
 			startProgress(count, signedTxs.length, {status});
-			this._createTestTransactions({
+			this._createTestTxs({
 				wallet, address, count:nums, totalCount:count,
 				amount,
 				signedTxs, _log
@@ -1076,7 +1261,7 @@ class KaspaWalletCli {
 
 	*/
 
-	_createTestTransactions({wallet, _log, address, count, totalCount, amount, signedTxs, maxFee=6000}, CB){
+	_createTestTxs({wallet, _log, address, count, totalCount, amount, signedTxs, maxFee=6000}, CB){
 		if(count<1)
 			return
 		const {kaspacore} = Wallet;
