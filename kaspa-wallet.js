@@ -204,6 +204,10 @@ class KaspaWalletCli {
 		let decrypted = await Wallet.passwordHandler.decrypt(password, encryptedMnemonic);
 		return JSON.parse(decrypted)
 	}
+	async encryptMnemonic(password, mnemonic){
+		let encrypted = await Wallet.passwordHandler.encrypt(password, mnemonic);
+		return encrypted
+	}
 
 
 
@@ -589,6 +593,60 @@ class KaspaWalletCli {
 					log.error(ex.toString());
 				}
 				this.rpc.disconnect();
+	        })
+	    program
+	        .command('permanently-encrypt')
+	        .description('encrypt wallet permanently')
+	        .action(async (cmd, options) => {
+	        	const done = ()=>{
+	        		this.rpc.disconnect();
+	        	}
+	        	const askForPass = ({title="Please enter password to encrypt: ", password}, CB)=>{
+	        		Prompt({
+						muted:true,
+						question:title.yellow,
+						CB:(pass)=>{
+							if(password){
+								if(password != pass){
+									log.error("\nPassword dont match");
+									askForPass({title, password}, CB)
+									return
+								}
+							}else{
+								if(pass.length<8){
+									log.error("Invalid password");
+									done()
+									return
+								}
+							}
+							CB(pass)
+						},
+						errorCB:()=>{
+							log.error("Invalid password");
+							done()
+							//reject('invalid password');
+						}
+					})
+	        	}
+	        	try {
+	        		const wallet = await this.openWallet();
+	        		askForPass({}, (password)=>{
+	        			askForPass({title:"Confirm password to encrypt: ", password}, async (confirmPassword)=>{
+		        			log.info('')
+							let encryptedMnemonic = await wallet.export(password)
+							//console.log("wallet.mnemonic", wallet.mnemonic, "encryptedMnemonic:"+encryptedMnemonic)
+							if(!encryptedMnemonic){
+								log.error("Could not encrypt wallet");
+								done()
+								return 
+							}
+							storage.saveWallet(encryptedMnemonic, {encryption:"default", generator: "cli"})
+		        		})
+	        		})
+	        	}catch(ex) {
+					log.error(ex.toString());
+				}
+				done();
 	        })
 	    program
 	        .command('compound')
