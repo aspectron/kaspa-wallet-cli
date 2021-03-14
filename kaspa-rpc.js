@@ -5,8 +5,10 @@ const { RPC } = require('@kaspa/grpc-node');
 const pkg = require('./package.json');
 const { fstat } = require('fs');
 const { colors } = require('@aspectron/colors.ts');
+const { Logger, FlowLogger } = require('@aspectron/flow-logger');
 const NATS = require('nats');
 const jc = NATS.JSONCodec();
+const log = new FlowLogger('RPC');
 
 const networks = {
     mainnet: { port: 16110 },
@@ -68,6 +70,8 @@ class KaspaInterface {
         const methods = proto.KaspadMessage.type.field
             .filter(({name})=>/request/i.test(name));
 
+        if(process.argv.includes('--verbose'))
+            log.enable('verbose');
 
         program
             .version(pkg.version,'--version')
@@ -86,10 +90,9 @@ class KaspaInterface {
 Please run ${'kaspa-rpc help'.yellow} for addition information and examples.        
         `)
 
-            
         program
             .command('run')
-            .description('Call gRPC with raw JSON arguments "run -m <method> -j <json_data>" ')
+            .description('call gRPC with raw JSON arguments "run -m <method> -j <json_data>" ')
             .option('-m, --method <method>', "rpc request")
             .option('-j, --json <json>', "rpc request args as json string, default will be '{}' ")
             .action(async (cmd, options) => {
@@ -160,20 +163,37 @@ Examples:
 `);
             });
 
-/*
+
         program
-        .command('nats')
-        .description('serve the wallet API via NATS')
-        .action(async (cmd, options) => {
+        .command('proxy-nats')
+        .description('proxy kaspa RPC API via NATS')
+        .option('--nats-server <host>:<port>','use custom NATS server')
+        .option('--token <host>:<port>','use token for NATS server auth')
+        .action(async (options) => {
 
-            await this.connectNATS();
+            log.info(options);
+//            process.exit(0);
+            const natsOptions = {
+                servers : options.natsServer || 'nats.kaspanet.io'
+            }
 
+            if(options.token)
+                natsOptions.token = options.token;
+
+            try {
+                await this.connectNATS(natsOptions);
+            } catch(error) {
+                log.error(`unable to connect to "${natsOptions.server}"`);
+                log.error(error.toString());
+                log.error(error);
+                process.exit(0);
+            }
 
             methods.forEach(method=>{
                 const {name, typeName} = method;
                 const fn = name.replace(/Request$/,'');
                 let fields = proto[typeName].type.field;
-
+                // log.verbose(`proxying ${name} to NATS`);
                 let subscription = this.nats.subscribe(name);
                 (async()=>{
                     for await(const msg of subscription) {
@@ -194,7 +214,7 @@ Examples:
                             })
 
                         } catch(error) {
-                            this.nats.publish('KASPA.WALLET.error', jc.encode({ error }));
+                            this.nats.publish('KASPA.error', jc.encode({ error }));
                             if(msg.reply) {
                                 msg.respond(jc.encode({error}));
                             }
@@ -204,7 +224,7 @@ Examples:
 
             });
         });
-*/
+
         methods.forEach(method=>{
             const {name, typeName} = method;
             const fn = name.replace(/Request$/,'');
@@ -291,20 +311,16 @@ Examples:
         })
 
         program.parse(process.argv);
+//        console.log('options:',this.options);
+        //if()
     }
 
-/*
+
 
 	async connectNATS(options) {
-
-		let natsHostInfo = `${options?.host||'localhost'}:${options?.port||4222}`;
-
 		this.nats = await NATS.connect(options);
-		// console.log("NATS CONNECTION:",nc);
-		//this.nats_conn.push(nc);
-
 		(async () => {
-			console.info(`connected ${this.nats.getServer()}`);
+			log.info(`nats connected to ${this.nats.getServer()}`);
 			for await (const status of this.nats.status()) {
 				//console.info(`NATS: ${status.type}: ${status.data}`);
 			}
@@ -312,28 +328,19 @@ Examples:
 
 		this.nats.closed().then((err) => {
 			console.log(`connection closed ${err ? " with error: " + err.message : ""}`);
-		});			
+		});
 
-		this.online = true;
-		this.log(`NATS connected to ${natsHostInfo}`);
-		// console.log(nc);
-		
-		
-		const { info } = this.nats;
-
-		this.log('');
+		const { info } = this.nats.protocol;
 		const entries = Object.entries(info);
 		let padding = entries.map(([k]) => k.length).reduce((a,k) => Math.max(k,a));
 		entries.forEach(([k,v]) => {
-			this.log(`${k}:`.padStart(padding+1,' '),(v+'').brightWhite);
+			log.verbose(`${k}:`.padStart(padding+1,' '),(v+''));
 		})
-		this.log('');		
-
 	}
 
 	async stopNATS() {
         if(this.nats) {
-		    await this.nats.drain();
+            await this.nats.drain();
             this.nats.close();
             delete this.nats;
         }
@@ -357,7 +364,7 @@ Examples:
 			});
 		}
 	}
-*/
+
 
 }
 

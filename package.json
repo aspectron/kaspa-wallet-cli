@@ -15,6 +15,8 @@
   "license": "ISC",
   "dependencies": {
     "@aspectron/flow-async": "^1.0.0",
+    "@aspectron/flow-logger": "^1.0.3",
+    "@aspectron/flow-uid": "0.0.5",
     "@kaspa/grpc": ">=1.1.0",
     "@kaspa/grpc-node": ">=1.0.1",
     "@kaspa/wallet": ">=1.0.10",
@@ -22,7 +24,6 @@
     "cli-progress": "^3.9.0",
     "commander": ">=7.0.0",
     "decimal.js": "^10.2.1",
-    "nats": "^2.0.0-220",
     "qrcode-terminal": "^0.12.0"
   },
   "devDependencies": {
