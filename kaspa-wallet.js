@@ -664,7 +664,10 @@ class KaspaWalletCli {
 				}
 				this.rpc.disconnect();
 	        })
-		}
+
+			program.parse(process.argv);
+
+	}
 
 	rpcDisconnect(){
 		dpc(1000, ()=>{
