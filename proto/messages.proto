@@ -84,6 +84,18 @@ message KaspadMessage {
     UTXOOfAddressChangedNotificationMessage utxoOfAddressChangedNotification = 1054;
     GetUTXOsByAddressRequestMessage getUTXOsByAddressRequest = 1055;
     GetUTXOsByAddressResponseMessage getUTXOsByAddressResponse = 1056;
+
+    StopNotifyingUtxosChangedRequestMessage stopNotifyingUtxosChangedRequest = 1065;
+    StopNotifyingUtxosChangedResponseMessage stopNotifyingUtxosChangedResponse = 1066;
+    NotifyPruningPointUTXOSetOverrideRequestMessage notifyPruningPointUTXOSetOverrideRequest = 1067;
+    NotifyPruningPointUTXOSetOverrideResponseMessage notifyPruningPointUTXOSetOverrideResponse = 1068;
+    PruningPointUTXOSetOverrideNotificationMessage pruningPointUTXOSetOverrideNotification = 1069;
+    StopNotifyingPruningPointUTXOSetOverrideRequestMessage stopNotifyingPruningPointUTXOSetOverrideRequest = 1070;
+    StopNotifyingPruningPointUTXOSetOverrideResponseMessage stopNotifyingPruningPointUTXOSetOverrideResponse = 1071;
+    NotifyVirtualDaaScoreChangedRequestMessage notifyVirtualDaaScoreChangedRequest = 1072;
+    NotifyVirtualDaaScoreChangedResponseMessage notifyVirtualDaaScoreChangedResponse = 1073;
+    VirtualDaaScoreChangedNotificationMessage virtualDaaScoreChangedNotification = 1074;
+  
   }
 }
 
@@ -344,6 +356,24 @@ message GetBlockTemplateTransactionMessage{
   uint64 fee = 5;
 }
 
+// NotifyVirtualDaaScoreChangedRequestMessage registers this connection for
+// virtualDaaScoreChanged notifications.
+//
+// See: VirtualDaaScoreChangedNotificationMessage
+message NotifyVirtualDaaScoreChangedRequestMessage {
+}
+
+message NotifyVirtualDaaScoreChangedResponseMessage {
+  RPCError error = 1000;
+}
+
+// VirtualDaaScoreChangedNotificationMessage is sent whenever the DAA score
+// of the virtual changes.
+//
+// See NotifyVirtualDaaScoreChangedRequestMessage
+message VirtualDaaScoreChangedNotificationMessage {
+  uint64 virtualDaaScore = 1;
+}
 message NotifyBlockAddedRequestMessage{
 }
 
