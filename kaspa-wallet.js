@@ -217,7 +217,7 @@ class KaspaWalletCli {
 			console.log(`\n${label}:\n${deco1.repeat(100)}\n${text}\n${deco2.repeat(100)}\n`)
 		}
 
-		const logLevels = ['error','warn','info','verbose','debug'];
+		const logLevels = ['error','warn','info','verbose','debug', 'utxodebug'];
 		program
 			.version(pkg.version, '--version')
 			.description(`Kaspa Wallet CLI v${pkg.version}`)
@@ -792,6 +792,7 @@ class KaspaWalletCli {
 				const blockCount = parseInt(bdi.blockCount);
 				const headerCount = parseInt(bdi.headerCount);
 				//const { blueScore } = parseInt(vspbs.blueScore);
+				//console.log("\nheaderCount:"+headerCount, "blockCount:"+blockCount, "pastMedianTime:"+ new Date(pastMedianTime))
 
 
 				switch(this.syncState) {
