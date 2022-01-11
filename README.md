@@ -31,11 +31,12 @@ Running Kaspa Wallet
 $ node kaspa-wallet
 Usage: kaspa-wallet [options] [command]
 
-Kaspa Wallet client
+Kaspa Wallet CLI v1.1.18
 
 Options:
   --version                                output the version number
-  --log <level>                            set log level error, warn, info, verbose, debug
+  --no-sync                                disable network sync for all operations
+  --log <level>                            set log level error, warn, info, verbose, debug, utxodebug
   --verbose                                log wallet activity
   --debug                                  debug wallet activity
   --testnet                                use testnet network
@@ -47,12 +48,18 @@ Options:
   --help                                   display help for command
 
 Commands:
+  sync                                     sync wallet with the network
   monitor                                  monitor wallet activity
   balance                                  display wallet balance
   send [options] <address> <amount> [fee]  send funds to an address
   info                                     internal wallet information
+  transactions                             list wallet transactions
   address                                  show wallet address
+  qrcode [options]                         show wallet address qrcode
   create [options]                         create Kaspa wallet
+  permanently-decrypt                      decrypt wallet permanently
+  permanently-encrypt                      encrypt wallet permanently
+  compound                                 compound transactions by re-sending funds to itself
   help [command]                           display help for command
 ```
 
