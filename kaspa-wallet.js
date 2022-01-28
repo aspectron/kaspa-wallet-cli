@@ -392,9 +392,11 @@ class KaspaWalletCli {
 
 			program
 			.command('info')
+			.option("--show-change-address", "show change address")
+			.option("--show-all-addresses", "show all (receive and change) addresses")
 			.description('internal wallet information')
 			.action(async (cmd, options) => {
-
+				let {showChangeAddress, showAllAddresses} = cmd;
 				try {
 
 					const wallet = await this.openWallet();
@@ -407,12 +409,30 @@ class KaspaWalletCli {
 					console.log("network:", wallet.network.yellow);
 					console.log("blue score:", wallet.blueScore.cyan);
 					console.log("---");
-					console.log("current address:", wallet.addressManager.receiveAddress.current.address.green);
+					console.log("current receive address:", wallet.addressManager.receiveAddress.current.address.green);
+					if(showChangeAddress){
+						if(wallet.addressManager.changeAddress.counter == 0)
+							wallet.addressManager.changeAddress.next();
+						console.log("current change address:", wallet.addressManager.changeAddress.current.address.green);
+					}
 					console.log(`balance available:`, `${this.KAS(wallet.balance.available)} KAS`.cyan,
 					` pending:`, `${this.KAS(wallet.balance.pending)} KAS`.cyan, 
 					` total:`, `${this.KAS(wallet.balance.total)} KAS`.cyan);
 					console.log("receive addresses used:",wallet.addressManager.receiveAddress.counter);
 					console.log("change addresses used: ",wallet.addressManager.changeAddress.counter);
+					
+					if(showAllAddresses){
+						let listAddresses = (info)=>{
+							Object.entries(info.atIndex).forEach(([k, v])=>{
+								console.log(`	#${k}:`,v.green);
+							})
+						}
+						console.log("Receive addresses:");
+						listAddresses(wallet.addressManager.receiveAddress)
+						console.log("Change addresses:");
+						listAddresses(wallet.addressManager.changeAddress)
+					}
+					
 					console.log("UTXO storage: ");
 					Object.entries(wallet.utxoSet.utxoStorage).forEach(([k, v])=>{
 						console.log("  address:",k.green, " UTXOs:",v.length);
