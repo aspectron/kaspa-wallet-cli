@@ -132,7 +132,7 @@ class KaspaWalletCli {
 		walletLogger.level = level;
 	}
 
-	openWallet() {
+	openWallet(addressDiscoveryExtent=1000) {
 		return new Promise(async (resolve, reject) => {
 			let walletMeta = await storage.getWallet();
 			if(!walletMeta || !walletMeta.wallet?.mnemonic){
@@ -141,7 +141,7 @@ class KaspaWalletCli {
 
 			if(walletMeta.encryption=='none'){
 				const { network, rpc } = this;
-				let wallet = Wallet.fromMnemonic(walletMeta.wallet.mnemonic, { network, rpc });
+				let wallet = Wallet.fromMnemonic(walletMeta.wallet.mnemonic, { network, rpc }, {addressDiscoveryExtent});
 				return resolve(wallet);
 			}
 
@@ -390,7 +390,7 @@ class KaspaWalletCli {
 
 			});
 
-			program
+		program
 			.command('info')
 			.option("--show-change-address", "show change address")
 			.option("--show-all-addresses", "show all (receive and change) addresses")
@@ -499,7 +499,80 @@ class KaspaWalletCli {
 					log.error(ex.toString());
 				}
 			})
+		program
+			.command('addresses <count> [search-address]')
+			.option("--json", "output as json format")
+			.option("-s --start <start>", "output as json format")
+			.description('show wallet addresses', {
+				"search-address": "Search address",
+				"start":"Starting index"
+			})
+			.action(async(count, search, cmd) => {
 
+				try {
+					let {json=false, start=0} = cmd;
+					//console.log("cmd", "search address:'"+search+"'")
+					const wallet = await this.openWallet();
+					console.log('getting addresses for', this.network);
+					this.setupLogs(wallet);
+					//await wallet.sync(true);
+					console.log('');
+					console.log('');
+					
+					let listAddresses = (info)=>{
+
+						if (json){
+							let list = [];
+							Object.entries(info.atIndex).forEach(([k, v])=>{
+								//console.log(`	#${k}:`,v.green);
+								list.push(v);
+							})
+
+							console.log("\n"+JSON.stringify(list, null, "\t"));
+
+						}else{
+							Object.entries(info.atIndex).forEach(([k, v])=>{
+								console.log(`	#${k}:`,v.green);
+							})
+						}
+					}
+					start = +start;
+					console.log("start:"+start, "count:"+count)
+					if (search){
+						console.log("Searching...", search)
+						for (let i=start; i< count; i++){
+							if (i % 200 == 0){
+								console.log("index...", i);
+							}
+							let address = wallet.addressManager.changeAddress.next();
+							if (address == search){
+								console.log("found at change index:", i);
+								break;
+							}
+							address =  wallet.addressManager.receiveAddress.next();
+							if (address == search){
+								console.log("found at receive index:", i);
+								break;
+							}
+						}
+					}else{
+						for (let i=start; i< count; i++){
+							wallet.addressManager.changeAddress.next();
+							wallet.addressManager.receiveAddress.next();
+						}
+					}
+					if (!search){
+						console.log("Receive addresses:");
+						listAddresses(wallet.addressManager.receiveAddress)
+						console.log("Change addresses:");
+						listAddresses(wallet.addressManager.changeAddress)
+					}
+
+					this.rpc.disconnect();
+				} catch(ex) {
+					log.error(ex.toString());
+				}
+			})
 		program
 			.command('qrcode')
 			.description('show wallet address qrcode')
