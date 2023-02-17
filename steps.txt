@@ -1,6 +1,6 @@
 
 
-1) start kespad (let say kd0 instance) with following config file
+1) start kaspad (let say kd0 instance) with following config file
 
 debuglevel=info
 nobanning=1
@@ -14,7 +14,7 @@ testnet=1
 wallet=1
 
 
-2) start another kespad (let say kd1 instance) with following config file
+2) start another kaspad (let say kd1 instance) with following config file
 
 debuglevel=info
 nobanning=1
