@@ -102,7 +102,7 @@ class KaspaWalletCli {
 						console.log('');
 						log.error(msg);
 						process.exit(1);
-					} break;
+					}
 					default: {
 						console.log('');
 						log.error(msg);
@@ -500,19 +500,28 @@ class KaspaWalletCli {
 				}
 			})
 		program
-			.command('addresses <count> [search-address]')
+			.command('addresses')
+			.argument('<count>', 'number of addresses to show')
+			.argument('[search-address]', 'search address')
 			.option("--json", "output as json format")
-			.option("-s --start <start>", "output as json format")
-			.description('show wallet addresses', {
-				"search-address": "Search address",
-				"start":"Starting index"
-			})
+			.option("-s --start <start>", "starting index")
+			.option("--seed <seed_phrase>", "override wallet seed phrase")
+			.description('show wallet addresses')
 			.action(async(count, search, cmd) => {
 
 				try {
-					let {json=false, start=0} = cmd;
+					let {json=false, start=0, seed=undefined} = cmd;
 					//console.log("cmd", "search address:'"+search+"'")
-					const wallet = await this.openWallet();
+					let wallet;
+					if(seed) {
+						wallet = Wallet.fromMnemonic(
+							seed,
+							{ network: this.network },
+							{ skipSyncBalance: true, syncOnce: false}
+						)
+					} else {
+						wallet = await this.openWallet();
+					}
 					console.log('getting addresses for', this.network);
 					this.setupLogs(wallet);
 					//await wallet.sync(true);
